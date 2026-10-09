@@ -110,6 +110,11 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .dc b{font-family:var(--display);font-size:16px}
 .dc.full{border-color:var(--accent)}
 .dc.full b{color:var(--accent)}
+.slot .mplate{display:flex;flex-direction:column;width:100%;max-width:86px;margin-top:1px;border-radius:5px;overflow:hidden;background:rgba(8,14,10,.82);box-shadow:0 1px 3px rgba(0,0,0,.35);font-size:11px;line-height:1.3}
+.mplate .mclub{padding:2px 5px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mplate .mrow{display:flex;border-top:1px solid rgba(255,255,255,.1)}
+.mplate .tt{flex:none;width:16px;display:grid;place-items:center;font:800 12px var(--display);background:#2f9e55;color:#fff}
+.mplate .mvs{flex:1;min-width:0;padding:2px 3px;font-size:10.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.92}
 .altag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--al);background:color-mix(in srgb,var(--al) 14%,transparent);border-radius:5px;padding:2px 7px;white-space:nowrap}
 .altag.sm{font-size:10.5px;padding:1px 6px;gap:4px;margin-top:2px;background:rgba(10,30,20,.55);border:1px solid color-mix(in srgb,var(--al) 45%,transparent)}
 .altag.sm i{width:6px;height:6px}
@@ -288,6 +293,10 @@ const ALIN={T:{n:"Titular esta fecha",s:"Titular",c:"#56c98b"}};
 const ALIN_ORD={T:0,N:2};
 function alinOf(f,pid){const p=S.plantel[pid];if(!f||!f.alin||!p)return null;const c=f.alin[p.d];if(!c)return null;return c[pid]==="T"?"T":"N"}
 function alinClubs(f){return f&&f.alin?Object.keys(f.alin).filter(c=>DIVS.includes(c)).length:0}
+/* placa debajo de la camiseta: club, T verde si es titular y contra quién juega */
+function rivalOf(f,club){if(!f)return "";const m=prPartidos(f,["top14"]).find(x=>x.l===club||x.v===club);return m?(m.l===club?m.v:m.l):""}
+function matchPlate(f,pid){const club=fdiv(pid);const tit=alinOf(f,pid)==="T";const r=rivalOf(f,club);
+  return `<span class="mplate"><span class="mclub">${esc(shortClub(club))}</span>${tit||r?`<span class="mrow">${tit?`<span class="tt" title="Titular esta fecha">T</span>`:""}<span class="mvs">${r?"v "+esc(shortClub(r)):"&nbsp;"}</span></span>`:""}</span>`}
 function alinTag(code,short){if(!code||!ALIN[code])return "";const a=ALIN[code];return `<span class="altag" style="--al:${a.c}" title="${a.n}"><i></i>${short?a.s:a.n}</span>`}
 function hcLabel(club){return coachOf(club)||shortClub(club)}
 /* camisetas por club: c1 base, c2 detalle, pat = lisa | aros | anchos | bastones | mitades | banda. Se editan en Admin > Camisetas */
@@ -480,7 +489,7 @@ function slotHtml(s,pid,st,hasStats){
   let pt="";if(hasStats){const v=rolePts(S.draft,pid,st[pid]);pt=`<span class="pt num" data-v="${v}">${v}</span>`}
   const bd=ROLES.filter(r=>S.draft[r.k]===pid).map(r=>`<span class="rb ${r.k}" title="${r.n}">${r.b}</span>`).join("");
   const drop=S.justPicked===s?" drop":"";
-  return `<button class="slot${drop}" data-slot="${s}" aria-label="${esc(SLOT_NAME[s]+": "+p.n)}">${pt}${bd?`<span class="badges">${bd}</span>`:""}${jersey(s,surname(p.n),false,fdiv(pid))}<span class="dv">${esc(shortClub(fdiv(pid)))}</span>${alinOf(S.fechas.find(x=>x.id===S.fechaSel),pid)==="T"?`<span class="altag sm" style="--al:${ALIN.T.c}" title="${ALIN.T.n}"><i></i>Titular</span>`:""}</button>`;
+  return `<button class="slot${drop}" data-slot="${s}" aria-label="${esc(SLOT_NAME[s]+": "+p.n)}">${pt}${bd?`<span class="badges">${bd}</span>`:""}${jersey(s,surname(p.n),false,fdiv(pid))}${matchPlate(S.fechas.find(x=>x.id===S.fechaSel),pid)}</button>`;
 }
 
 $("#view").addEventListener("click",e=>{
