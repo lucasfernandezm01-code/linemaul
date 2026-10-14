@@ -1459,7 +1459,7 @@ async function start(){
   let got=0;const done=()=>{got++;if(got>=4){S.ready=true;render()}else if(S.ready)scheduleRender()};
   const once=fn=>{let first=true;return snap=>{fn(snap);if(first){first=false;done()}else scheduleRender()}};
   const err=()=>{};
-  db.doc("config/plantel").onSnapshot(once(s=>{const d=s.exists?s.data():null;S.plantel=Object.assign({},d&&d.players||{})}),err);
+  db.doc("config/plantel").onSnapshot(once(s=>{const d=s.exists?s.data():null;S.plantel=Object.fromEntries(Object.entries(d&&d.players||{}).filter(([,p])=>p&&DIVS.includes(p.d)))}),err);
   db.doc("config/reglas").onSnapshot(once(s=>{const d=s.exists?s.data():null;S.pts=Object.assign({},DEF_PTS,d&&d.pts||{})}),err);
   db.collection("fechas").onSnapshot(once(q=>{S.fechas=q.docs.map(d=>{const o=Object.assign({},d.data(),{id:d.id});o._estado=o.estado;delete o.estado;Object.defineProperty(o,"estado",{get(){return estDe(this)},enumerable:true});return o})}),err);
   S.ligas={};S.cierres={};
