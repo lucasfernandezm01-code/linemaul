@@ -269,7 +269,7 @@ body[data-game="prode"]{--bg:#0b1430;--surface:#13204a;--line:#2b3e7a;--chip:#1b
 <script>
 (function(){
 "use strict";
-const DIVS=["Alumni","Atlético del Rosario","Belgrano","Buenos Aires","CASI","Champagnat","CUBA","Hindú","La Plata","Los Matreros","Los Tilos","Newman","Regatas","SIC"];
+const DIVS=["Alumni","Atlético del Rosario","Belgrano","Buenos Aires","CASI","CUBA","Hindú","La Plata","Los Matreros","Los Tilos","Newman","Regatas","San Luis","SIC"];
 const SHORT={"Atlético del Rosario":"Atl. Rosario","Los Matreros":"Matreros","Buenos Aires":"Bs. As."};
 const shortClub=d=>SHORT[d]||d;
 const MAXDIV=2;
@@ -288,7 +288,7 @@ const HCS={};DIVS.forEach(c=>HCS[c]=c);
 /* entrenador de cada club (se edita en Admin > Clubes) */
 function coachOf(club){return String((S.coaches&&S.coaches[club])||"").trim()}
 /* club del participante (para la tabla por club) */
-const OTROS_CLUBES=["Albatros", "Almafuerte", "Areco", "Argentino", "Arsenal Zárate", "Lanús", "Atlético y Progreso", "Banco Nación", "Banco Hipotecario", "Beromama", "CU Quilmes", "Casa de Padua", "Centro Naval", "Chascomús", "Ciudad de Buenos Aires", "Ciudad de Campana", "Curupaytí", "DAOM", "Delta", "Deportiva Francesa", "Don Bosco", "El Retiro", "GE Ituzaingó", "GEBA", "Hurling", "Italiano", "La Salle", "Las Cañas", "Liceo Militar", "Liceo Naval", "Lomas Athletic", "Los Cedros", "Los Pinos", "Luján", "Manuel Belgrano", "Mariano Moreno", "Monte Grande", "Obras Sanitarias", "Old Georgian", "Olivos", "Porteño", "Pucará", "Pueyrredón", "San Albano", "San Andrés", "San Carlos", "San Cirano", "San Fernando", "San José", "San Luis", "San Marcos", "San Martín", "San Miguel", "San Patricio", "SITAS", "Sociedad Hebraica", "St. Brendan's", "Tigre", "Universitario de La Plata", "Varela Jr.", "Vicente López", "Vicentinos", "Virreyes", "Atlético San Andrés", "Berisso", "Defensores de Glew", "Del Sur", "Ezeiza", "Floresta", "Los Molinos", "Marcos Paz", "Mercedes", "Berazategui", "PAC General Rodríguez", "Rivadavia de Lobos", "Tiro Federal de Baradero", "Tiro Federal de San Pedro"].sort((a,b)=>a.localeCompare(b,"es"));
+const OTROS_CLUBES=["Albatros", "Almafuerte", "Areco", "Argentino", "Arsenal Zárate", "Atlético San Andrés", "Atlético y Progreso", "Banco Hipotecario", "Banco Nación", "Berazategui", "Berisso", "Beromama", "Casa de Padua", "Centro Naval", "Champagnat", "Chascomús", "Ciudad de Buenos Aires", "Ciudad de Campana", "CU Quilmes", "Curupaytí", "DAOM", "Defensores de Glew", "Del Sur", "Delta", "Deportiva Francesa", "Don Bosco", "El Retiro", "Ezeiza", "Floresta", "GE Ituzaingó", "GEBA", "Hurling", "Italiano", "La Salle", "Lanús", "Las Cañas", "Liceo Militar", "Liceo Naval", "Lomas Athletic", "Los Cedros", "Los Molinos", "Los Pinos", "Luján", "Manuel Belgrano", "Marcos Paz", "Mariano Moreno", "Mercedes", "Monte Grande", "Obras Sanitarias", "Old Georgian", "Olivos", "PAC General Rodríguez", "Porteño", "Pucará", "Pueyrredón", "Rivadavia de Lobos", "San Albano", "San Andrés", "San Carlos", "San Cirano", "San Fernando", "San José", "San Marcos", "San Martín", "San Miguel", "San Patricio", "SITAS", "Sociedad Hebraica", "St. Brendan's", "Tigre", "Tiro Federal de Baradero", "Tiro Federal de San Pedro", "Universitario de La Plata", "Varela Jr.", "Vicente López", "Vicentinos", "Virreyes"].sort((a,b)=>a.localeCompare(b,"es"));
 const CLUB_OTRO="Otro";
 function hasClubTable(c){return !!c&&c!==CLUB_OTRO}
 function myClubSaved(){const t=myTeam();return t&&t.club?String(t.club):""}
@@ -1083,7 +1083,7 @@ $("#view").addEventListener("input",e=>{
 const PR_EXACTO=5,PR_CERCA=3,PR_MEDIO=2,PR_GANADOR=1,PR_EMPATE=8,PR_PLENO=5;
 const PR_COMPS=[["top14","Top 14"],["a","Primera A"]];
 const COMP_N=Object.fromEntries(PR_COMPS);const COMP_IDS=PR_COMPS.map(c=>c[0]);
-const PRIMERA_A=["Curupaytí","Deportiva Francesa","GEBA","Hurling","Lomas Athletic","Olivos","Pucará","Pueyrredón","San Albano","San Andrés","San Cirano","San Fernando","San Luis","Universitario de La Plata"];
+const PRIMERA_A=["Champagnat","Curupaytí","Deportiva Francesa","GEBA","Hurling","Lomas Athletic","Olivos","Pucará","Pueyrredón","San Albano","San Andrés","San Cirano","San Fernando","Universitario de La Plata"];
 const COMP_CLUBS={top14:DIVS,a:PRIMERA_A};
 Object.assign(SHORT,{"Universitario de La Plata":"Univ. La Plata","Deportiva Francesa":"Dep. Francesa","Lomas Athletic":"Lomas"});
 const compOf=m=>COMP_N[m&&m.c]?m.c:"top14";
