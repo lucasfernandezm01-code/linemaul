@@ -87,7 +87,7 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .slot.empty .shirt{background:transparent;color:#fff;border:2px dashed rgba(255,255,255,.7);line-height:26px}
 .slot .nm{font-weight:600;font-size:13px;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slot .dv{font-size:11px;opacity:.8;white-space:nowrap}
-.slot .badges{position:absolute;top:2px;right:4px;display:flex;gap:2px}
+.slot .badges{position:absolute;top:2px;right:4px;display:flex;gap:2px;z-index:2}
 .rb{display:inline-block;min-width:18px;height:18px;padding:0 3px;border-radius:9px;font:800 11px/18px var(--display);text-align:center;background:#fff;color:#14201a}
 .rb.cap{background:var(--accent);color:var(--accent-fg)}
 .rb.kick{background:#7cc4ff;color:#06263d}
@@ -110,6 +110,8 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .dc b{font-family:var(--display);font-size:16px}
 .dc.full{border-color:var(--accent)}
 .dc.full b{color:var(--accent)}
+.slot .rb,.slot .tt{cursor:help}
+.tt-in{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:3px;background:#2f9e55;color:#fff;font:800 11px var(--display);vertical-align:-2px}
 .slot .mplate{display:flex;flex-direction:column;width:100%;max-width:86px;margin-top:1px;border-radius:5px;overflow:hidden;background:rgba(8,14,10,.82);box-shadow:0 1px 3px rgba(0,0,0,.35);font-size:11px;line-height:1.3}
 .mplate .mclub{padding:2px 5px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mplate .mrow{display:flex;border-top:1px solid rgba(255,255,255,.1)}
@@ -509,7 +511,8 @@ function slotHtml(s,pid,st,hasStats){
 
 $("#view").addEventListener("click",e=>{
   const fb=e.target.closest("[data-fecha]");if(fb){if(S.dirty&&S.fechaSel!==fb.dataset.fecha&&!confirmLeave())return;S.fechaSel=fb.dataset.fecha;S.dirty=false;S.draftKey=null;render();return}
-  const sl=e.target.closest("[data-slot]");if(sl){openSheet(+sl.dataset.slot);return}
+  const bdg=e.target.closest(".slot .rb, .slot .tt");if(bdg){const k=bdg.classList.contains("tt")?"T":bdg.classList.contains("cap")?"cap":"kick";const [t,d]=BADGE_INFO[k];openInfoSheet(t,`<p style="margin:0;font-size:15px;line-height:1.5">${d}</p>`);return}
+  const sl=e.target.closest("[data-slot]");if(sl){const f=S.fechas.find(x=>x.id===S.fechaSel);const slot=+sl.dataset.slot;if(f&&f.estado!=="abierta"){if(S.draft.picks[slot])playerInfo(slot);return}openSheet(slot);return}
   if(e.target.closest("#shareXV")){openShare();return}
   const ro=e.target.closest("[data-role]");if(ro&&!ro.disabled){openRoleSheet(ro.dataset.role);return}
 });
@@ -517,6 +520,24 @@ function confirmLeave(){toast("Tenés cambios sin guardar en esta fecha. Guardal
 
 /* hoja de selección */
 let sheetSlot=null,sheetQ="";
+/* info de insignias y desglose de puntos de un jugador en fecha cerrada */
+const BADGE_INFO={cap:["Capitán","Suma doble sus tries y también sus tarjetas. Los puntos de patada (conversiones y penales) no se duplican."],kick:["Pateador","Solo las conversiones y penales de tu pateador suman puntos. Las patadas del resto de tu XV no cuentan. Los drops suman para cualquiera."],T:["Titular","Está confirmado entre los 15 titulares de su club en esta fecha."]};
+const ST_N={t:["try","tries"],c:["conversión","conversiones"],p:["penal","penales"],d:["drop","drops"],a:["amarilla","amarillas"],r:["roja","rojas"]};
+function openInfoSheet(title,html){const el=$("#sheet");el.hidden=false;sheetRole="info";sheetSlot=null;
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${esc(title)}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:14px 16px 18px">${html}</div></div></div>`}
+function playerInfo(slot){const pid=S.draft.picks[slot];const p=pid&&S.plantel[pid];if(!p)return;const f=S.fechas.find(x=>x.id===S.fechaSel);const club=fdiv(pid);
+  const all=f.stats||{};const pub=Object.keys(all).length>0&&f.estado==="final";const st=all[pid]||{};
+  const isCap=S.draft.cap===pid,isKick=S.draft.kick===pid;const rows=[];let base=0,kick=0;
+  for(const [k] of STATS){const c=+st[k]||0;if(!c)continue;const v=c*(+S.pts[k]||0);const lab=`${c} ${ST_N[k][c>1?1:0]}`;
+    if(KICKS.includes(k)&&k!=="d"&&!isKick){rows.push(`<div class="pdrow"><div class="small">${lab} <span class="muted">· no suma, no es tu pateador</span></div><b class="num pdpts muted">0</b></div>`);continue}
+    if(KICKS.includes(k))kick+=v;else base+=v;
+    rows.push(`<div class="pdrow"><div class="small">${lab}</div><b class="num pdpts ${v>0?"pos":"neg"}">${v>0?"+":""}${v}</b></div>`)}
+  if(isCap&&base)rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base>0?"pos":"neg"}">${base>0?"+":""}${base}</b></div>`);
+  const tot=(isCap?base*2:base)+kick;const tit=alinOf(f,pid)==="T";const r=rivalOf(f,club);
+  const roles=[isCap?`<span class="rb cap">C</span> Capitán`:"",isKick?`<span class="rb kick">P</span> Pateador`:""].filter(Boolean).join(" · ");
+  const head=`<div class="row" style="gap:12px;align-items:center;margin-bottom:10px"><svg viewBox="0 0 64 60" style="width:58px;height:54px;flex:none" aria-hidden="true">${miniKit(club)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(club)} · ${esc(posNames(p))}</div><div class="small" style="margin-top:3px">${tit?`<span class="tt-in">T</span> Titular · `:""}${r?"vs "+esc(r):""}${roles?` · ${roles}`:""}</div></div></div>`;
+  const body=!pub?`<p class="muted" style="margin:0">Todavía no se publicaron los puntos de esta fecha.</p>`:rows.length?rows.join("")+`<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${tot}</b></div>`:`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p><div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">0</b></div>`;
+  openInfoSheet(SLOT_NAME[slot]||"Jugador",head+`<div style="display:flex;flex-direction:column">${body}</div>`)}
 function openSheet(slot){sheetSlot=slot;sheetQ="";renderSheet();const i=$("#pq");if(i)i.focus()}
 let sheetRole=null;
 function openRoleSheet(k){sheetRole=k;sheetSlot=null;if(k==="hc")renderHcSheet();else renderRoleSheet()}
