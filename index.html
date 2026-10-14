@@ -585,7 +585,10 @@ function insignias(fid){const fins=finalFechas();const idx=fins.findIndex(f=>f.i
     if(caps.length){const bc=Math.max(...caps.map(x=>x.v));if(bc>0)caps.forEach(x=>{if(x.v===bc)add(x.id,"ojo")})}
   }
   _bcache[fid]={k:key,v:out};return out}
-function badgeHtml(list,big){if(!list||!list.length)return "";return list.map(b=>{const d=BADGE_DEF[b];return `<span class="bdg ${b}${big?" big":""}" title="${d.n}: ${d.d}"><svg viewBox="0 0 24 24" aria-hidden="true">${d.ic}</svg>${big?d.n:""}</span>`}).join("")+(big?"":" ")}
+function badgeHtml(list,big){if(!list||!list.length)return "";return list.map(b=>{const d=BADGE_DEF[b];return `<span class="bdg ${b}${big?" big":""}" data-bdg="${b}" role="button" tabindex="0" title="${d.n}: ${d.d}"><svg viewBox="0 0 24 24" aria-hidden="true">${d.ic}</svg>${big?d.n:""}</span>`}).join("")+(big?"":" ")}
+/* tocar una insignia en la tabla: explica qué es (sin abrir el equipo) */
+$("#view").addEventListener("click",e=>{const b=e.target.closest(".bdg[data-bdg]");if(!b)return;e.stopPropagation();e.preventDefault();const k=b.dataset.bdg;const d=BADGE_DEF[k];if(!d)return;
+  openInfoSheet(d.n,`<div class="row" style="gap:12px;align-items:center"><span class="bdg ${k} big" style="flex:none"><svg viewBox="0 0 24 24" aria-hidden="true">${d.ic}</svg>${d.n}</span></div><p style="margin:12px 0 0;font-size:15px;line-height:1.5">${d.d}.</p><p class="small muted" style="margin:8px 0 0">Las insignias se entregan cada vez que se publican los puntos de una fecha. Pueden ganarla varios a la vez si empatan.</p>`)},true);
 /* ---------- revelar puntos: la primera vez que entrás después de publicada la fecha ---------- */
 function revealKey(fid){return "gdt-rev-"+fid+"-"+(S.uid||"")}
 function revealed(fid){try{return localStorage.getItem(revealKey(fid))==="1"}catch(e){return !!(S._rev&&S._rev[fid])}}
