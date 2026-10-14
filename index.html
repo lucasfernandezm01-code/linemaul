@@ -117,6 +117,9 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .mplate .mrow{display:flex;border-top:1px solid rgba(255,255,255,.1)}
 .mplate .tt{flex:none;width:16px;display:grid;place-items:center;font:800 12px var(--display);background:#2f9e55;color:#fff}
 .mplate .mvs{flex:1;min-width:0;padding:2px 3px;font-size:10.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.92}
+.othc{display:flex;flex-direction:column;gap:6px;padding:8px 0 2px;border-top:1px dashed var(--line)}
+.chip.ghost{background:transparent;border-style:dashed;opacity:.85}
+.chip.ghost[aria-pressed="true"]{opacity:1;background:transparent;color:var(--accent);border-color:var(--accent)}
 .altag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--al);background:color-mix(in srgb,var(--al) 14%,transparent);border-radius:5px;padding:2px 7px;white-space:nowrap}
 .altag.sm{font-size:10.5px;padding:1px 6px;gap:4px;margin-top:2px;background:rgba(10,30,20,.55);border:1px solid color-mix(in srgb,var(--al) 45%,transparent)}
 .altag.sm i{width:6px;height:6px}
@@ -1186,17 +1189,23 @@ $("#savebar").addEventListener("click",async e=>{
 /* ---------- Tabla del prode ---------- */
 function renderPTabla(){
   const v=$("#view");const fs=prFechas();const fins=fs.filter(f=>f.estado==="final");
-  const bar=ligaBar();const L=S.liga&&S.liga!=="__club"?S.ligas[S.liga]:null;
   const allComps=COMP_IDS.filter(c=>fs.some(f=>prPartidos(f,[c]).length));
-  if(!S.ptComp||!allComps.includes(S.ptComp))S.ptComp=allComps[0]||"top14";
+  /* competencias que jugás arriba; las demás, solo para ver */
+  const mineC=S.uid?allComps.filter(c=>myComps().includes(c)):allComps.slice();const otherC=allComps.filter(c=>!mineC.includes(c));
+  if(!S.ptComp||!allComps.includes(S.ptComp))S.ptComp=mineC[0]||allComps[0]||"top14";
+  const viewOnly=otherC.includes(S.ptComp);if(viewOnly)S.liga=null;
+  const bar=viewOnly?"":ligaBar();const L=S.liga&&S.liga!=="__club"?S.ligas[S.liga]:null;
   const comps=L?((L.comps&&L.comps.length?L.comps:["top14"]).filter(c=>COMP_N[c])):[S.ptComp];
+  const mineBar=mineC.length?`<div class="seg" role="group" aria-label="Mis competencias">${mineC.map(c=>`<button data-ptcomp="${c}" aria-pressed="${!viewOnly&&c===S.ptComp}">${esc(COMP_N[c])}</button>`).join("")}</div>`:"";
+  const otherBar=otherC.length?`<div class="othc"><span class="small muted">Otras competencias · solo para ver</span><div class="row" style="gap:6px;flex-wrap:wrap">${otherC.map(c=>`<button class="chip ghost" data-ptcomp="${c}" aria-pressed="${c===S.ptComp}">👀 ${esc(COMP_N[c])}</button>`).join("")}</div></div>`:"";
   const compBar=L?`<div class="banner small">Suman: <b style="font-family:var(--body);font-size:14px;text-transform:none">${comps.map(c=>esc(COMP_N[c])).join(" + ")}</b></div>`
-    :(allComps.length>1?`<div class="seg" role="group" aria-label="Competencia">${allComps.map(c=>`<button data-ptcomp="${c}" aria-pressed="${c===S.ptComp}">${esc(COMP_N[c])}</button>`).join("")}</div>`:"");
+    :viewOnly?`<div class="banner small" style="justify-content:space-between;gap:10px;flex-wrap:wrap"><span>👀 <b style="font-family:var(--body);font-size:14px;text-transform:none">${esc(COMP_N[S.ptComp])}</b> · Solo para ver: no jugás esta competencia. Para sumarte, elegila en Mi Prode.</span>${mineC.length?`<button class="btn sm" data-ptcomp="${mineC[0]}">Volver a mis tablas</button>`:""}</div>`:"";
+  const ptHead=viewOnly?`${otherBar}${compBar}`:`${L?"":mineBar}${bar}${compBar}${L?"":otherBar}`;
   const clubOf=uid=>(S.equipos[uid]&&S.equipos[uid].club)||"";
   let ids=Object.keys(S.prode);Object.values(S.cierres||{}).forEach(sn=>{if(sn&&sn.prode)Object.keys(sn.prode).forEach(u=>{if(!ids.includes(u))ids.push(u)})});
   ids=ids.filter(u=>prPlayedIn(u,comps));
   if(S.liga==="__club"){const mc=norm(myClubSaved());ids=ids.filter(u=>norm(clubOf(u))===mc)}else if(S.liga)ids=ids.filter(u=>{const t=S.equipos[u];return t&&Array.isArray(t.ligas)&&t.ligas.includes(S.liga)});
-  if(!ids.length){v.innerHTML=`<section class="view">${bar}${compBar}<div class="empty"><h3>Todavía no hay pronósticos</h3>La tabla aparece cuando la gente guarda su prode y se publican los resultados.</div></section>`;return}
+  if(!ids.length){v.innerHTML=`<section class="view">${ptHead}<div class="empty"><h3>Todavía no hay pronósticos</h3>La tabla aparece cuando la gente guarda su prode y se publican los resultados.</div></section>`;return}
   const cfs=fs.filter(f=>prPartidos(f,comps).length);const cfins=cfs.filter(f=>f.estado==="final");
   const mode=S.ptMode||"general";
   if(mode==="fecha"&&(!S.ptFecha||!cfs.find(f=>f.id===S.ptFecha)))S.ptFecha=(cfins[cfins.length-1]||cfs[cfs.length-1]||{}).id;
@@ -1217,7 +1226,7 @@ function renderPTabla(){
       ${mode==="fecha"?`<td class="r big num">${c3}</td><td class="r num muted">${r.tot}</td>`:`<td class="r num muted">${c3}</td><td class="r big num">${r.tot}</td>`}</tr>
       ${open?`<tr class="detail"><td colspan="4">${prDetail(r.id,detF,comps)}</td></tr>`:""}`}).join("");
   const head=mode==="fecha"?`<th class="r">${fSel?esc(fname(fSel)):"Fecha"}</th><th class="r">Total</th>`:`<th class="r">${last?esc(fname(last)):"Últ."}</th><th class="r">Total</th>`;
-  v.innerHTML=`<section class="view">${bar}${compBar}
+  v.innerHTML=`<section class="view">${ptHead}
     <div class="seg" role="group" aria-label="Tipo de tabla"><button data-ptmode="general" aria-pressed="${mode==="general"}">General</button><button data-ptmode="fecha" aria-pressed="${mode==="fecha"}">Por fecha</button></div>
     ${mode==="fecha"?`<div class="chips" role="group" aria-label="Fecha">${cfs.map(f=>`<button class="chip" data-ptfecha="${esc(f.id)}" aria-pressed="${fSel&&fSel.id===f.id}"><span class="dot ${f.estado}"></span>${esc(fname(f))}</button>`).join("")}</div>`:""}
     ${mode==="general"&&!cfins.length?`<div class="banner">Todavía no se publicaron resultados. La tabla se ordena con la primera fecha.</div>`:""}
