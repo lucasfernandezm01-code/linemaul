@@ -50,8 +50,7 @@ for (const f of fechas) {
     jobs.push(["cierre", t => { const x = !t.has_xv, p = !t.has_prode; if (!x && !p) return null;
       return { title: "La fecha cierra en 2 h ⏰", body: x && p ? "Todavía no armaste tu XV ni hiciste el Prode." : x ? "Todavía no armaste tu XV." : "Todavía no hiciste el Prode.", url: SITE + (x ? "?go=dt" : "?go=prode") }; }, pref("cierre")]);
   if (d.estado === "final" && cierra && now - cierra < 7 * 864e5) {
-    const c = local(cierra); const at = Date.UTC(c.getUTCFullYear(), c.getUTCMonth(), c.getUTCDate(), 23, 0) + ART;
-    if (now >= at) jobs.push(["puntos", { title: "¡Puntos publicados!", body: "Entrá y mirá cómo te fue en la fecha.", url: SITE + "?go=dt" }, pref("puntos")]);
+    jobs.push(["puntos", { title: "¡Puntos publicados!", body: "Entrá y mirá cómo te fue en la fecha.", url: SITE + "?go=dt" }, pref("puntos")]);
   }
   if (!jobs.length) continue;
   const targets = await rpc("push_targets", { fid: f.id });
