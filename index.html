@@ -798,6 +798,11 @@ $("#sheet").addEventListener("click",async e=>{
     try{await S.db.doc("ligas/"+S.uid).set({torneos});S.ligas[code]={nombre,owner:S.uid,juego:S.game,comps};await setLigas([...myLigas(),code]);closeSheet();S.liga=code;S.tab=S.game==="prode"?"ptabla":"tabla";toast("Torneo creado. Código: "+code);render()}catch(err){toast("No se pudo crear. Probá de nuevo.")}return}
 });
 function closeSheet(){sheetSlot=null;sheetRole=null;$("#sheet").hidden=true;$("#sheet").innerHTML=""}
+/* llevar al jugador del lugar o al lugar sl. El que estaba en sl: si puede jugar en o, se intercambian;
+   si no, baja a un lugar libre del banco de su puesto; si no hay, no se puede mover */
+function movePlan(sl,o){const cur=S.draft.picks[sl];if(!cur||!S.plantel[cur])return {mode:"move"};if(fitsSlot(cur,o))return {mode:"swap"};
+  const fit=BENCH.filter(b=>b!==sl&&fitsSlot(cur,b));const free=fit.find(b=>b===o||!S.plantel[S.draft.picks[b]]);
+  return free?{mode:"bench",b:free}:{mode:"block",b:fit[0]||null}}
 function renderSheet(){
   const f=S.fechas.find(x=>x.id===S.fechaSel);const editable=f&&f.estado==="abierta"&&!!S.uid;
   const slot=sheetSlot;const gs=slotGroups(slot);const cur=S.draft.picks[slot];const cnt=divCounts(S.draft.picks);
@@ -805,11 +810,12 @@ function renderSheet(){
   const ci=editable?cambiosInfo():null;let sinCambios=false;
   if(ci){const tp=Object.assign({},S.draft.picks,{[slot]:"__nuevo__"});const pv=new Set(ci.prev);sinCambios=cambiosUsados(tp,pv)>ci.max}
   /* cambios con el banco (o con el XV, si es un suplente): no cuentan */
-  const swaps=!editable?[]:(isXV(slot)?BENCH:ROWS.flat()).filter(o=>{const po=S.draft.picks[o];return po&&S.plantel[po]&&fitsSlot(po,slot)&&(!cur||!S.plantel[cur]||fitsSlot(cur,o))}).map(o=>{
-    const tp=Object.assign({},S.draft.picks);const po=tp[o];tp[slot]=po;if(cur)tp[o]=cur;else delete tp[o];const c2=divCounts(tp);
-    const over=DIVS.find(d=>c2[d]>maxOf(f)&&c2[d]>cnt[d]);return {o,po,over}});
-  const swapHtml=swaps.length?`<div class="swaps"><div class="small muted" style="padding:2px 4px 6px">${isXV(slot)?(cur?"Cambiar con un suplente":"Subir un suplente"):(cur?"Subirlo al XV en lugar de":"Pasar al banco a")} · no cuenta como cambio</div>${swaps.map(x=>{const p=S.plantel[x.po];
-    return `<button class="pick" data-swap="${x.o}" ${x.over?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>#${x.o} ${esc(p.n)}</span>${x.over?`<span class="why">Quedarías con más de ${maxOf(f)} de ${esc(x.over)}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(fdiv(x.po)))}</span><span class="tag" style="background:var(--accent);color:var(--accent-fg)">⇅ Cambiar</span></span></button>`}).join("")}</div>`:"";
+  /* mover jugadores propios a este puesto (XV o banco): ilimitado, no cuenta como cambio */
+  const swaps=!editable?[]:[...ROWS.flat(),...BENCH].filter(o=>o!==slot&&S.plantel[S.draft.picks[o]]&&fitsSlot(S.draft.picks[o],slot)).map(o=>Object.assign({o,po:S.draft.picks[o]},movePlan(slot,o)));
+  const curN=cur&&S.plantel[cur]?esc(surname(S.plantel[cur].n)):"";
+  const swapHtml=swaps.length?`<div class="swaps"><div class="small muted" style="padding:2px 4px 6px">Tus jugadores que pueden jugar acá · no cuenta como cambio</div>${swaps.map(x=>{const p=S.plantel[x.po];
+    const note=x.mode==="block"?(x.b?`Para moverlo, primero liberá el #${x.b} o quitá a ${curN}`:`Para moverlo, primero quitá a ${curN}`):x.mode==="bench"?`${curN} baja al banco (#${x.b})`:x.mode==="swap"?`${curN} pasa al #${x.o}`:"";
+    return `<button class="pick" data-swap="${x.o}" ${x.mode==="block"?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>#${x.o} ${esc(p.n)}${isXV(x.o)?"":` <span class="muted small">(suplente)</span>`}</span>${note?`<span class="why">${note}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(fdiv(x.po)))}</span><span class="tag" style="background:var(--accent);color:var(--accent-fg)">⇅ ${x.mode==="swap"?"Cambiar":"Mover acá"}</span></span></button>`}).join("")}</div>`:"";
   const q=norm(sheetQ);
   const aOrd=id=>{const a=alinOf(f,id);return a?ALIN_ORD[a]:3};
   const list=Object.entries(S.plantel).filter(([id,p])=>posList(p).some(x=>gs.includes(x))&&(!q||norm(p.n).includes(q)||norm(p.d).includes(q)))
@@ -841,8 +847,9 @@ $("#sheet").addEventListener("click",async e=>{
   const hb=e.target.closest("[data-hc-pick]");if(hb&&!hb.disabled){const d=hb.dataset.hcPick;S.draft.hc=S.draft.hc===d?null:d;S.dirty=true;closeSheet();render();return}
   const rb=e.target.closest("[data-role-pick]");if(rb&&!rb.disabled){const r=sheetRole;const id=rb.dataset.rolePick;S.draft[r]=S.draft[r]===id?null:id;S.dirty=true;closeSheet();render();return}
   if(e.target.id==="removeP"){const cur=S.draft.picks[sheetSlot];clearRoles(cur);delete S.draft.picks[sheetSlot];if(S.draft.divs)delete S.draft.divs[cur];S.dirty=true;closeSheet();render();return}
-  const sw=e.target.closest("[data-swap]");if(sw&&!sw.disabled){const o=+sw.dataset.swap,sl=sheetSlot;const a=S.draft.picks[sl],b=S.draft.picks[o];
-    S.draft.picks[sl]=b;if(a)S.draft.picks[o]=a;else delete S.draft.picks[o];clearRoles(isXV(sl)?a:b);S.justPicked=sl;setTimeout(()=>{S.justPicked=null},900);S.dirty=true;closeSheet();render();return}
+  const sw=e.target.closest("[data-swap]");if(sw&&!sw.disabled){const o=+sw.dataset.swap,sl=sheetSlot;const a=S.draft.picks[sl],b=S.draft.picks[o];const pl=movePlan(sl,o);if(pl.mode==="block")return;
+    S.draft.picks[sl]=b;delete S.draft.picks[o];if(pl.mode==="swap")S.draft.picks[o]=a;else if(pl.mode==="bench")S.draft.picks[pl.b]=a;
+    BENCH.forEach(x=>{if(S.draft.picks[x])clearRoles(S.draft.picks[x])});S.justPicked=sl;setTimeout(()=>{S.justPicked=null},900);S.dirty=true;closeSheet();render();return}
   const pb=e.target.closest("[data-pick]");if(pb&&!pb.disabled){const id=pb.dataset.pick;const old=S.draft.picks[sheetSlot];if(old&&old!==id){clearRoles(old);if(S.draft.divs)delete S.draft.divs[old]}S.draft.picks[sheetSlot]=id;S.justPicked=sheetSlot;setTimeout(()=>{S.justPicked=null},900);if(old!==id){S.draft.divs=S.draft.divs||{};S.draft.divs[id]=S.plantel[id].d}S.dirty=true;closeSheet();render()}
 });
 $("#sheet").addEventListener("click",async e=>{if(e.target.id!=="doRename")return;const t=myTeam();if(!canRename(t))return;
@@ -1023,7 +1030,7 @@ function renderReglas(){
     <div class="card"><h3>Cambios</h3><ul class="rules">
       <li>Cada fecha nueva arranca con tu equipo anterior copiado (XV y suplentes), así solo cambiás lo que quieras.</li>
       <li><b>Máximo ${MAX_CAMBIOS} cambios de plantel por fecha</b> (8 en semifinales y 4 en la final). Un cambio es sacar a uno de tus 23 y sumar a uno que no estaba. Tu primer equipo lo armás libre.</li>
-      <li>Los cambios entre titulares y suplentes son <b>ilimitados</b>: tocá un jugador y elegí con quién cambiarlo.</li>
+      <li>Mover jugadores dentro de tu equipo es <b>ilimitado</b>: entre titulares y suplentes, o de puesto si el jugador juega en más de uno. Tocá el lugar y elegilo en "Tus jugadores que pueden jugar acá". Si el que estaba ahí no puede ir al otro puesto, baja al banco.</li>
       <li>Tampoco cuentan completar un lugar vacío ni reemplazar a un jugador que dejó de estar en los planteles.</li>
     </ul></div>
     <div class="card"><h3>La fecha</h3><ul class="rules">
