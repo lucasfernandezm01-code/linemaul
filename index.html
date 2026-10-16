@@ -588,7 +588,7 @@ function playerInfo(slot){const pid=S.draft.picks[slot];const p=pid&&S.plantel[p
   const head=`<div class="row" style="gap:12px;align-items:center;margin-bottom:10px"><svg viewBox="0 0 64 60" style="width:58px;height:54px;flex:none" aria-hidden="true">${miniKit(club)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(club)} · ${esc(posNames(p))}</div><div class="small" style="margin-top:3px">${tit?`<span class="tt-in">T</span> Titular · `:""}${r?"vs "+esc(r):""}${roles?` · ${roles}`:""}</div></div></div>`;
   const body=!isXV(slot)?`<p class="muted" style="margin:0">Estuvo entre tus suplentes: sus puntos no cuentan para tu equipo.</p>`:!pub?`<p class="muted" style="margin:0">Todavía no se publicaron los puntos de esta fecha.</p>`:rows.length?rows.join("")+`<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${tot}</b></div>`:`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p><div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">0</b></div>`;
   openInfoSheet(SLOT_NAME[slot]||"Jugador",head+`<div style="display:flex;flex-direction:column">${body}</div>`)}
-function openSheet(slot){sheetSlot=slot;sheetQ="";renderSheet();const i=$("#pq");if(i)i.focus()}
+function openSheet(slot){sheetSlot=slot;sheetQ="";renderSheet()}
 let sheetRole=null;
 function openRoleSheet(k){sheetRole=k;sheetSlot=null;if(k==="hc")renderHcSheet();else renderRoleSheet()}
 function miniKit(club){const k=kitOf(club);const id="mk"+(miniKit._n=(miniKit._n||0)+1);return kitArt(k,id,"rgba(0,0,0,.6)")}
