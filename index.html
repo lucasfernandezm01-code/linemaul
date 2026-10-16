@@ -307,10 +307,10 @@ const MAX_CAMBIOS=4;
 /* el nombre del equipo queda fijo: se puede cambiar una vez, hasta el 30/4/2027 */
 const NAME_DEADLINE=Date.parse("2027-05-01T03:00:00Z");
 const STATS=[["t","Try","Tries"],["o","Try de oro","Oro"],["c","Conversión","Conv."],["p","Penal","Pen."],["d","Drop","Drop"],["a","Amarilla","Amar."],["r","Roja","Roja"],["m","Man of the Match","MoM"]];
-/* el Man of the Match no lo duplica el capitán */
-const NO_CAP=["m"];
+/* el capitán duplica todo menos conversiones y penales */
+const NO_CAP=["c","p"];
 const DEF_PTS={t:5,o:10,c:1,p:1,d:3,a:-3,r:-6,m:5};
-const ROLES=[{k:"cap",b:"C",n:"Capitán",d:"Suma doble todo lo que hace."},{k:"kick",b:"P",n:"Pateador",d:"Solo sus conversiones y penales suman puntos."}];
+const ROLES=[{k:"cap",b:"C",n:"Capitán",d:"Suma doble todo, menos conversiones y penales."},{k:"kick",b:"P",n:"Pateador",d:"Solo sus conversiones y penales suman puntos."}];
 /* Head Coach = un club: suma si gana su partido */
 const HCS={};DIVS.forEach(c=>HCS[c]=c);
 /* entrenador de cada club (se edita en Admin > Clubes) */
@@ -373,11 +373,11 @@ function surname(n){const p=String(n).trim().split(/\s+/);return p.length>1?p.sl
 function playerPts(st){if(!st)return 0;let s=0;for(const [k] of STATS)s+=(+st[k]||0)*(+S.pts[k]||0);return s}
 function fechaStats(fid){const f=S.fechas.find(x=>x.id===fid);return (f&&f.stats)||{}}
 /* puntos de un jugador dentro de un XV: conversiones y penales solo cuentan si es el pateador;
-   el capitán duplica tries y tarjetas, pero nunca los puntos de patada (conversión, penal, drop) */
+   el capitán duplica todo (drops y Man of the Match incluidos), menos conversiones y penales */
 const KICKS=["c","p","d"];
 function rolePts(e,pid,st){if(!st)return 0;let base=0,kick=0;
-  for(const [k] of STATS){const v=(+st[k]||0)*(+S.pts[k]||0);if(KICKS.includes(k)){if(k!=="d"&&e.kick!==pid)continue;kick+=v}else if(NO_CAP.includes(k))kick+=v;else base+=v}
-  const tot=base+kick;return e.cap===pid?tot*2:tot}
+  for(const [k] of STATS){const v=(+st[k]||0)*(+S.pts[k]||0);if(NO_CAP.includes(k)){if(e.kick!==pid)continue;kick+=v}else base+=v}
+  return (e.cap===pid?base*2:base)+kick}
 function hcPts(e,f){if(!e||!e.hc||!f||!f.res)return 0;return HC_PTS[f.res[e.hc]]||0}
 /* foto del cierre: si existe cierres/<fecha>, manda esa copia (no editable por los participantes) */
 /* respaldo: si el organizador abre el sitio y una fecha ya cerró sin registro, lo guarda solo */
@@ -568,7 +568,7 @@ function confirmLeave(){toast("Tenés cambios sin guardar en esta fecha. Guardal
 /* hoja de selección */
 let sheetSlot=null,sheetQ="";
 /* info de insignias y desglose de puntos de un jugador en fecha cerrada */
-const BADGE_INFO={cap:["Capitán","Suma doble todo: tries, try de oro, patadas que cuentan, Man of the Match y también las tarjetas."],kick:["Pateador","Solo las conversiones y penales de tu pateador suman puntos. Las patadas del resto de tu XV no cuentan. Los drops suman para cualquiera."],T:["Titular","Está confirmado entre los 15 titulares de su club en esta fecha."]};
+const BADGE_INFO={cap:["Capitán","Suma doble todo: tries, try de oro, drops, Man of the Match y también las tarjetas. Las conversiones y penales no se duplican."],kick:["Pateador","Solo las conversiones y penales de tu pateador suman puntos. Las patadas del resto de tu XV no cuentan. Los drops suman para cualquiera."],T:["Titular","Está confirmado entre los 15 titulares de su club en esta fecha."]};
 const ST_N={t:["try","tries"],o:["try de oro","tries de oro"],m:["Man of the Match","Man of the Match"],c:["conversión","conversiones"],p:["penal","penales"],d:["drop","drops"],a:["amarilla","amarillas"],r:["roja","rojas"]};
 function openInfoSheet(title,html){const el=$("#sheet");el.hidden=false;sheetRole="info";sheetSlot=null;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${esc(title)}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:14px 16px 18px">${html}</div></div></div>`}
@@ -577,10 +577,10 @@ function playerInfo(slot){const pid=S.draft.picks[slot];const p=pid&&S.plantel[p
   const isCap=S.draft.cap===pid,isKick=S.draft.kick===pid;const rows=[];let base=0,kick=0;
   for(const [k] of STATS){const c=+st[k]||0;if(!c)continue;const v=c*(+S.pts[k]||0);const lab=k==="m"?"Man of the Match":`${c} ${ST_N[k][c>1?1:0]}`;
     if(KICKS.includes(k)&&k!=="d"&&!isKick){rows.push(`<div class="pdrow"><div class="small">${lab} <span class="muted">· no suma, no es tu pateador</span></div><b class="num pdpts muted">0</b></div>`);continue}
-    if(KICKS.includes(k)||NO_CAP.includes(k))kick+=v;else base+=v;
+    if(NO_CAP.includes(k))kick+=v;else base+=v;
     rows.push(`<div class="pdrow"><div class="small">${lab}</div><b class="num pdpts ${v>0?"pos":"neg"}">${v>0?"+":""}${v}</b></div>`)}
-  if(isCap&&(base+kick))rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base+kick>0?"pos":"neg"}">${base+kick>0?"+":""}${base+kick}</b></div>`);
-  const tot=isCap?(base+kick)*2:base+kick;const tit=alinOf(f,pid)==="T";const r=rivalOf(f,club);
+  if(isCap&&base)rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base>0?"pos":"neg"}">${base>0?"+":""}${base}</b></div>`);
+  const tot=(isCap?base*2:base)+kick;const tit=alinOf(f,pid)==="T";const r=rivalOf(f,club);
   const roles=[isCap?`<span class="rb cap">C</span> Capitán`:"",isKick?`<span class="rb kick">P</span> Pateador`:""].filter(Boolean).join(" · ");
   const head=`<div class="row" style="gap:12px;align-items:center;margin-bottom:10px"><svg viewBox="0 0 64 60" style="width:58px;height:54px;flex:none" aria-hidden="true">${miniKit(club)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(club)} · ${esc(posNames(p))}</div><div class="small" style="margin-top:3px">${tit?`<span class="tt-in">T</span> Titular · `:""}${r?"vs "+esc(r):""}${roles?` · ${roles}`:""}</div></div></div>`;
   const body=!isXV(slot)?`<p class="muted" style="margin:0">Estuvo entre tus suplentes: sus puntos no cuentan para tu equipo.</p>`:!pub?`<p class="muted" style="margin:0">Todavía no se publicaron los puntos de esta fecha.</p>`:rows.length?rows.join("")+`<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${tot}</b></div>`:`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p><div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">0</b></div>`;
@@ -1004,7 +1004,7 @@ function renderReglas(){
     </ul></div>
     <div class="card"><h3>Roles</h3><ul class="rules">
       <li>Elegís capitán y pateador entre tus 15 titulares (pueden ser el mismo jugador) y un Head Coach.</li>
-      <li><span class="rb cap">C</span> <b>Capitán:</b> suma doble todo: tries, try de oro, patadas que cuentan, Man of the Match y también las tarjetas.</li>
+      <li><span class="rb cap">C</span> <b>Capitán:</b> suma doble todo: tries, try de oro, drops, Man of the Match y también las tarjetas. Las conversiones y penales no se duplican.</li>
       <li><span class="rb kick">P</span> <b>Pateador:</b> solo sus conversiones y penales suman. Las del resto no cuentan. Los drops suman para cualquiera.</li>
       <li><span class="rb hc">HC</span> <b>Head Coach:</b> elegís el entrenador de uno de los 14 clubes. Si su club gana, +3. Si pierde, −3. El empate no suma.</li>
     </ul></div>
