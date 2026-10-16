@@ -390,7 +390,7 @@ const HC_PTS={G:3,E:0,P:-3};const RES_N={G:"Ganó",E:"Empató",P:"Perdió"};
 /* un jugador puede tener varios puestos: g = principal, gs = lista acumulada */
 /* ala y octavo se unificaron en "Tercera línea" (los datos viejos se convierten al cargar) */
 const G_OLD={ALA:"TER",OCT:"TER"};
-function normPlantel(pl){const o={};for(const [id,p] of Object.entries(pl||{})){if(!p)continue;const q=Object.assign({},p);q.g=G_OLD[q.g]||q.g;if(Array.isArray(q.gs))q.gs=[...new Set(q.gs.map(x=>G_OLD[x]||x))];o[id]=q}return o}
+function normPlantel(pl){const o={};for(const [id,p] of Object.entries(pl||{})){if(!p||!p.n||!p.g)continue;const q=Object.assign({},p);q.g=G_OLD[q.g]||q.g;if(Array.isArray(q.gs))q.gs=[...new Set(q.gs.map(x=>G_OLD[x]||x))];o[id]=q}return o}
 function posList(p){const l=Array.isArray(p.gs)&&p.gs.length?p.gs.filter(x=>GROUPS[x]):[];if(!l.includes(p.g))l.unshift(p.g);return l}
 function posNames(p){return posList(p).map(x=>GROUPS[x].n).join(" / ")}
 const ESTADOS={abierta:"Abierta",cerrada:"Cerrada",final:"Puntos publicados",proxima:"Próxima"};
