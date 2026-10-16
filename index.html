@@ -279,10 +279,13 @@ body[data-game="prode"]{--bg:#0b1430;--surface:#13204a;--line:#2b3e7a;--chip:#1b
 const DIVS=["Alumni","Atlético del Rosario","Belgrano","Buenos Aires","CASI","CUBA","Hindú","La Plata","Los Matreros","Los Tilos","Newman","Regatas","San Luis","SIC"];
 const SHORT={"Atlético del Rosario":"Atl. Rosario","Los Matreros":"Matreros","Buenos Aires":"Bs. As."};
 const shortClub=d=>SHORT[d]||d;
-const MAXDIV=2;
+const MAXDIV=3;
 /* límite por club: 2 en la fase regular; cada fecha puede tener el suyo (semis 4, final 8) */
-function maxOf(f){const m=f&&+f.max;return m>0?m:MAXDIV}
-const MAX_OPTS=[[2,"2 por club"],[3,"3 por club"],[4,"4 por club (semis)"],[8,"8 por club (final)"],[15,"Sin límite"]];
+/* 3 por club en la fase regular, 6 en semis, 12 en la final (cuenta los 23); valores viejos se redondean */
+function maxOf(f){const m=f&&+f.max;if(!(m>0)||m<=3)return MAXDIV;if(m<=6)return 6;return m>=15?23:12}
+/* cambios de plantel: 3 por fecha, 8 en semis, 4 en la final */
+function cambiosOf(f){const m=maxOf(f);return m>=12?4:m>=6?8:MAX_CAMBIOS}
+const MAX_OPTS=[[3,"3 por club · 3 cambios"],[6,"6 por club · 8 cambios (semis)"],[12,"12 por club · 4 cambios (final)"]];
 const GROUPS={PIL:{n:"Pilar",s:[1,3]},HOO:{n:"Hooker",s:[2]},SEG:{n:"Segunda línea",s:[4,5]},ALA:{n:"Ala",s:[6,7]},OCT:{n:"Octavo",s:[8]},MED:{n:"Medio scrum",s:[9]},APE:{n:"Apertura",s:[10]},CEN:{n:"Centro",s:[12,13]},WIN:{n:"Wing",s:[11,14]},FB:{n:"Fullback",s:[15]}};
 const SLOT_GROUP={};Object.keys(GROUPS).forEach(k=>GROUPS[k].s.forEach(s=>SLOT_GROUP[s]=k));
 const SLOT_NAME={1:"Pilar izquierdo",2:"Hooker",3:"Pilar derecho",4:"Segunda línea",5:"Segunda línea",6:"Ala",7:"Ala",8:"Octavo",9:"Medio scrum",10:"Apertura",11:"Wing izquierdo",12:"Primer centro",13:"Segundo centro",14:"Wing derecho",15:"Fullback"};
@@ -437,13 +440,13 @@ function loadDraft(fid){
 }
 function fdiv(pid){const fz=S.draft&&S.draft.divs&&S.draft.divs[pid];if(fz&&DIVS.includes(fz))return fz;const p=S.plantel[pid];return p?p.d:null}
 function freezeDivs(){const d={};for(const s in S.draft.picks){const pid=S.draft.picks[s];if(!pid)continue;d[pid]=(S.draft.divs&&S.draft.divs[pid])||(S.plantel[pid]&&S.plantel[pid].d)}S.draft.divs=d}
-function divCounts(picks){const c={};DIVS.forEach(d=>c[d]=0);for(const s in picks){if(!isXV(s))continue;const pid=picks[s];if(!S.plantel[pid])continue;const d=fdiv(pid);if(c[d]!=null)c[d]++}return c}
+function divCounts(picks){const c={};DIVS.forEach(d=>c[d]=0);for(const s in picks){const pid=picks[s];if(!S.plantel[pid])continue;const d=fdiv(pid);if(c[d]!=null)c[d]++}return c}
 
 function prevSquad(fid){const t=myTeam();if(!t||!t.fechas||!S.uid)return null;const fs=sortedFechas();const i=fs.findIndex(x=>x.id===fid);
   for(let k=i-1;k>=0;k--){const e=entryOf(S.uid,t,fs[k].id);if(e&&e.picks&&Object.values(e.picks).some(Boolean))return new Set(Object.values(e.picks).filter(p=>p&&S.plantel[p]))}return null}
 /* llenar un lugar vacío no cuenta; tampoco reemplazar a uno que ya no está en los planteles */
 function cambiosUsados(picks,prev){const cur=new Set(Object.values(picks).filter(p=>p&&(S.plantel[p]||p==="__nuevo__")));let nuevos=0;cur.forEach(p=>{if(!prev.has(p))nuevos++});return Math.max(0,nuevos-Math.max(0,23-prev.size))}
-function cambiosInfo(){const prev=prevSquad(S.fechaSel);return prev?{prev,used:cambiosUsados(S.draft.picks,prev)}:null}
+function cambiosInfo(){const prev=prevSquad(S.fechaSel);return prev?{prev,used:cambiosUsados(S.draft.picks,prev),max:cambiosOf(S.fechas.find(x=>x.id===S.fechaSel))}:null}
 function canRename(t){return !!t&&!(+t.nombreCambios>=1)&&Date.now()<NAME_DEADLINE}
 function nameField(t){const saved=t&&(t.nombre||"").trim();
   if(!saved)return `<label class="f" style="flex:1 1 200px">Nombre de tu equipo (queda fijo)<input type="text" id="teamName" maxlength="40" placeholder="Ej: Los Pilares del Sábado" value="${esc(S.nameDraft!=null?S.nameDraft:"")}" ${S.uid?"":"disabled"}></label>`;
@@ -492,13 +495,13 @@ function renderXV(){
     ${rolesHtml(editable)}
     <button class="btn share" id="shareXV" ${Object.values(picks).some(Boolean)?"":"disabled"}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Compartir mi XV</button>
     <div>
-      <h3 style="margin-bottom:8px">Jugadores por club <span class="muted small" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:500">· máximo ${maxOf(f)} en el XV</span></h3>
+      <h3 style="margin-bottom:8px">Jugadores por club <span class="muted small" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:500">· máximo ${maxOf(f)} en tus 23</span></h3>
       <div class="divcount">${DIVS.map(d=>`<div class="dc${cnt[d]>maxOf(f)?" over":cnt[d]>=maxOf(f)?" full":""}" title="${d}"><span>${esc(shortClub(d))}</span><b class="num">${cnt[d]}/${maxOf(f)}</b></div>`).join("")}</div>
     </div>
   </section>`;
   const n=Object.entries(picks).filter(([s,p])=>isXV(s)&&S.plantel[p]).length;const nb=BENCH.filter(s=>S.plantel[picks[s]]).length;const nr=ROLES.filter(r=>S.draft[r.k]).length+(S.draft.hc?1:0);const ci=editable?cambiosInfo():null;
   const sb=$("#savebar");sb.hidden=false;
-  sb.innerHTML=`<div class="in"><div class="msg">XV <b class="num">${n}/15</b> · Supl. <b class="num">${nb}/8</b>${ci?` · Cambios <b class="num"${ci.used>=MAX_CAMBIOS?' style="color:var(--accent)"':""}>${ci.used}/${MAX_CAMBIOS}</b>`:""} · Roles <b class="num">${nr}/${ROLES.length+1}</b>${S.dirty&&editable?" · <span style=\"color:var(--accent)\">sin guardar</span>":""}</div>
+  sb.innerHTML=`<div class="in"><div class="msg">XV <b class="num">${n}/15</b> · Supl. <b class="num">${nb}/8</b>${ci?` · Cambios <b class="num"${ci.used>=ci.max?' style="color:var(--accent)"':""}>${ci.used}/${ci.max}</b>`:""} · Roles <b class="num">${nr}/${ROLES.length+1}</b>${S.dirty&&editable?" · <span style=\"color:var(--accent)\">sin guardar</span>":""}</div>
     <button class="btn primary" id="saveXV" ${editable&&!S.saving?"":"disabled"}>${S.saving?"Guardando…":"Guardar XV"}</button></div>`;
   if(f.estado==="final"&&S.uid&&!revealed(f.id)&&S.revealing!==f.id&&entryOf(S.uid,myTeam(),f.id)){S.revealing=f.id;requestAnimationFrame(()=>revelar(f))}
 }
@@ -790,7 +793,7 @@ function renderSheet(){
   const slot=sheetSlot;const gs=slotGroups(slot);const cur=S.draft.picks[slot];const cnt=divCounts(S.draft.picks);
   const inXV=new Set(Object.values(S.draft.picks));const inBench=new Set(BENCH.map(b=>S.draft.picks[b]).filter(Boolean));
   const ci=editable?cambiosInfo():null;let sinCambios=false;
-  if(ci){const tp=Object.assign({},S.draft.picks,{[slot]:"__nuevo__"});const pv=new Set(ci.prev);sinCambios=cambiosUsados(tp,pv)>MAX_CAMBIOS}
+  if(ci){const tp=Object.assign({},S.draft.picks,{[slot]:"__nuevo__"});const pv=new Set(ci.prev);sinCambios=cambiosUsados(tp,pv)>ci.max}
   /* cambios con el banco (o con el XV, si es un suplente): no cuentan */
   const swaps=!editable?[]:(isXV(slot)?BENCH:ROWS.flat()).filter(o=>{const po=S.draft.picks[o];return po&&S.plantel[po]&&fitsSlot(po,slot)&&(!cur||!S.plantel[cur]||fitsSlot(cur,o))}).map(o=>{
     const tp=Object.assign({},S.draft.picks);const po=tp[o];tp[slot]=po;if(cur)tp[o]=cur;else delete tp[o];const c2=divCounts(tp);
@@ -806,8 +809,8 @@ function renderSheet(){
     let why="";let dis=false;
     if(id===cur){}
     else if(inXV.has(id)){why=inBench.has(id)?"Está en tus suplentes":"Ya está en tu XV";dis=true}
-    else if(isXV(slot)&&cnt[p.d]>=maxOf(f)&&!(curP&&fdiv(cur)===p.d)){why=`Ya tenés ${maxOf(f)} de ${p.d}`;dis=true}
-    else if(sinCambios&&!ci.prev.has(id)){why=`Ya usaste los ${MAX_CAMBIOS} cambios de la fecha`;dis=true}
+    else if(cnt[p.d]>=maxOf(f)&&!(curP&&fdiv(cur)===p.d)){why=`Ya tenés ${maxOf(f)} de ${p.d}`;dis=true}
+    else if(sinCambios&&!ci.prev.has(id)){why=`Ya usaste los ${ci.max} cambios de la fecha`;dis=true}
     const sp=seasonPlayerPts(id);
     return `<button class="pick${id===cur?" sel":""}" data-pick="${esc(id)}" ${dis||!editable?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>${esc(p.n)}</span>${alinOf(f,id)==="T"?`<span>${alinTag("T",false)}</span>`:""}${why?`<span class="why">${why}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(p.d))}</span><span class="tag num" title="Puntos en la temporada">${sp} pts</span></span></button>`}).join("");
   const el=$("#sheet");el.hidden=false;
@@ -816,7 +819,7 @@ function renderSheet(){
       <div class="row" style="justify-content:space-between"><h2>#${slot} · ${SLOT_NAME[slot]}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div>
       ${curP&&editable?`<div class="row"><button class="btn sm danger" id="removeP">Quitar a ${esc(surname(curP.n))}</button></div>`:""}
       ${!editable?`<div class="small muted">Esta fecha no está abierta: solo podés mirar.</div>`:""}
-      ${ci?`<div class="small muted">Cambios de plantel: <b class="num">${ci.used}/${MAX_CAMBIOS}</b>${sinCambios?" · solo podés elegir jugadores que ya tenías":""}</div>`:""}
+      ${ci?`<div class="small muted">Cambios de plantel: <b class="num">${ci.used}/${ci.max}</b>${sinCambios?" · solo podés elegir jugadores que ya tenías":""}</div>`:""}
       <input type="text" id="pq" placeholder="Buscar ${slotLbl(slot).toLowerCase()} por nombre o club" value="${esc(sheetQ)}" autocomplete="off">
     </div>
     <div class="list">${swapHtml}${items||`<div class="empty" style="margin:8px">No hay jugadores cargados como ${slotLbl(slot).toLowerCase()}${q?" con esa búsqueda":""}.</div>`}</div>
@@ -856,7 +859,7 @@ $("#savebar").addEventListener("click",e=>{if(e.target.id==="saveXV")guardarXV(f
 async function guardarXV(force){
   const f=S.fechas.find(x=>x.id===S.fechaSel);if(!f||f.estado!=="abierta"||!S.uid)return;
   const cnt=divCounts(S.draft.picks);if(DIVS.some(d=>cnt[d]>maxOf(f))){toast(`Hay un club con más de ${maxOf(f)} jugadores. Sacá alguno para guardar.`);return}
-  const ci=cambiosInfo();if(ci&&ci.used>MAX_CAMBIOS){toast(`Hiciste ${ci.used} cambios de plantel. El máximo es ${MAX_CAMBIOS} por fecha.`);return}
+  const ci=cambiosInfo();if(ci&&ci.used>ci.max){toast(`Hiciste ${ci.used} cambios de plantel. El máximo es ${ci.max} en esta fecha.`);return}
   const club=(clubDraft()||"").trim();if(!club){toast("Elegí tu club para guardar tu XV");const c=$("#myClub");if(c){c.scrollIntoView({behavior:"smooth",block:"center"});c.focus()}return}
   if(!force){const fl=faltantes();if(fl.length){avisoFaltantes(fl);return}}
   const t=myTeam()||{};const nameEl=$("#teamName");const nombre=(t.nombre||"").trim()||(nameEl?nameEl.value:"").trim().slice(0,40);
@@ -991,10 +994,10 @@ function renderReglas(){
       <li>Elegís 15 jugadores, uno por puesto, del 1 al 15. Cada puesto solo acepta jugadores que hayan jugado en esa posición. Hay jugadores con más de un puesto.</li>
       <li>Además elegís <b>8 suplentes</b> (del 16 al 23): pilar, hooker, segunda línea, tercera línea (ala u octavo), medio scrum, apertura, centro y wing o fullback. Los suplentes no suman puntos.</li>
       <li>Podés cambiar titulares por suplentes todas las veces que quieras: tocá un jugador y elegí con quién cambiarlo.</li>
-      <li><b>Máximo ${MAX_CAMBIOS} cambios de plantel por fecha.</b> Un cambio es sacar a uno de tus 23 y sumar a uno que no estaba. No cuentan los cambios entre titulares y suplentes, completar un lugar vacío ni reemplazar a un jugador que dejó de estar en los planteles. Tu primer equipo lo armás libre.</li>
+      <li><b>Máximo ${MAX_CAMBIOS} cambios de plantel por fecha</b> (8 en semifinales y 4 en la final). Un cambio es sacar a uno de tus 23 y sumar a uno que no estaba. No cuentan los cambios entre titulares y suplentes, completar un lugar vacío ni reemplazar a un jugador que dejó de estar en los planteles. Tu primer equipo lo armás libre.</li>
       <li>Al guardar tu primer XV elegís <b>tu club</b>. Así aparecés en tres tablas: la general, la de tu club y los torneos privados en los que estés. El <b>nombre de tu equipo</b> también queda fijo: lo podés cambiar una sola vez, hasta el 30 de abril de 2027. El club queda fijo para toda la temporada. Si elegís "Otro", jugás la general y los torneos privados, pero no tenés tabla de club.</li>
       <li>Podés elegir jugadores de cualquiera de los 14 clubes: ${DIVS.join(", ")}.</li>
-      <li>Máximo <b>${MAXDIV} jugadores por club</b> en tu XV durante la fase regular (los suplentes no cuentan para este límite). En semifinales el límite sube a 4 por club y en la final a 8, porque juegan menos equipos.</li>
+      <li>Máximo <b>${MAXDIV} jugadores por club</b> entre tus 23 (XV y suplentes) durante la fase regular. En semifinales el límite sube a 6 por club y en la final a 12, porque juegan menos equipos.</li>
       <li>Elegís capitán y pateador entre tus 15 (pueden ser el mismo jugador), y además un Head Coach.</li>
       <li><span class="rb cap">C</span> <b>Capitán:</b> suma doble sus tries y también sus tarjetas. Los puntos de patada no se duplican.</li>
       <li><span class="rb hc">HC</span> <b>Head Coach:</b> elegís el entrenador de uno de los 14 clubes. Si su club gana, +3. Si pierde, −3. El empate no suma.</li>
