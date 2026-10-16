@@ -81,7 +81,7 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .cdots{display:flex;gap:4px;flex:none}.cdots i{width:12px;height:12px;border-radius:50%;background:var(--accent)}.cdots i.u{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
 .banner.cambios.sin .cdots i.u{box-shadow:inset 0 0 0 2px var(--accent);opacity:.6}
 .swaps{border-bottom:1px solid var(--line);margin-bottom:6px;padding-bottom:6px}
-.prow{display:flex;justify-content:center;align-items:flex-start;gap:6px;position:relative}
+.prow{display:flex;justify-content:center;align-items:flex-start;gap:clamp(12px,5vw,28px);position:relative}.prow.four{gap:clamp(4px,2.6vw,20px)}.prow.mid{gap:clamp(28px,12vw,64px)}
 .slot{appearance:none;border:0;background:rgba(0,0,0,.18);color:#fff;border-radius:10px;padding:6px 4px 7px;width:88px;min-width:0;flex:0 1 88px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;position:relative;font-family:var(--body)}
 .slot:hover{background:rgba(0,0,0,.28)}
 .slot .jsy{width:78px;height:73px;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
@@ -292,7 +292,7 @@ const MAX_OPTS=[[3,"3 por club · 4 cambios"],[6,"6 por club · 8 cambios (semis
 const GROUPS={PIL:{n:"Pilar",s:[1,3]},HOO:{n:"Hooker",s:[2]},SEG:{n:"Segunda línea",s:[4,5]},TER:{n:"Tercera línea",s:[6,7,8]},MED:{n:"Medio scrum",s:[9]},APE:{n:"Apertura",s:[10]},CEN:{n:"Centro",s:[12,13]},WIN:{n:"Wing",s:[11,14]},FB:{n:"Fullback",s:[15]}};
 const SLOT_GROUP={};Object.keys(GROUPS).forEach(k=>GROUPS[k].s.forEach(s=>SLOT_GROUP[s]=k));
 const SLOT_NAME={1:"Pilar izquierdo",2:"Hooker",3:"Pilar derecho",4:"Segunda línea",5:"Segunda línea",6:"Tercera línea",7:"Tercera línea",8:"Tercera línea",9:"Medio scrum",10:"Apertura",11:"Wing izquierdo",12:"Primer centro",13:"Segundo centro",14:"Wing derecho",15:"Fullback"};
-const ROWS=[[1,2,3],[4,5],[6,8,7],[9],[10],[11,12,13,14],[15]];
+const ROWS=[[1,2,3],[4,5],[6,8,7],[9,10],[11,12,13,14],[15]];
 /* suplentes (16 a 23): no suman; se cambian con el XV sin límite */
 const BENCH=[16,17,18,19,20,21,22,23];
 const BENCH_G={16:["PIL"],17:["HOO"],18:["SEG"],19:["TER"],20:["MED"],21:["APE"],22:["CEN"],23:["WIN","FB"]};
@@ -485,7 +485,7 @@ function renderXV(){
   else if(f.estado==="cerrada")banner=`<span class="dot cerrada"></span><span><b>Fecha cerrada</b></span>`;
   else if(f.estado==="final")banner=`<span class="dot final"></span><span><b><span id="totPts" class="num" data-v="${teamFechaPts({fechas:{[f.id]:S.draft}},f.id)}">${teamFechaPts({fechas:{[f.id]:S.draft}},f.id)}</span> pts</b> · Puntos de ${esc(f.nombre)} publicados.</span>`;
   if(snapOf(f.id)&&f.estado!=="abierta")banner+=`</div><div class="banner small"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="flex:none"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Este es tu XV según el registro al cierre (${fmtDT(snapOf(f.id).at)} h). Es el que suma puntos. Si lo cambiaste después del horario, ese cambio vale recién para la fecha siguiente.</span>`;
-  const rowHtml=ROWS.map((r,i)=>`<div class="prow${r.length===4?" four":""}">${r.map(s=>slotHtml(s,picks[s],st,hasStats)).join("")}</div>`).join("");
+  const rowHtml=ROWS.map((r,i)=>`<div class="prow${r.length===4?" four":r.includes(9)?" mid":""}">${r.map(s=>slotHtml(s,picks[s],st,hasStats)).join("")}</div>`).join("");
   v.innerHTML=`<section class="view">
     <div class="chips" role="group" aria-label="Fecha">${fs.map(x=>`<button class="chip" data-fecha="${esc(x.id)}" aria-pressed="${x.id===f.id}"><span class="dot ${x.estado}"></span>${esc(x.nombre)}</button>`).join("")}</div>
     <div class="banner">${banner}</div>
@@ -746,8 +746,8 @@ async function buildCard(){
   ctx.save();ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=3;ctx.setLineDash([12,14]);[0.07,0.21,0.79,0.93].forEach(fx=>{ctx.beginPath();ctx.moveTo(ix+iw*fx,iy);ctx.lineTo(ix+iw*fx,tryY);ctx.stroke()});ctx.restore();
   ctx.fillStyle="rgba(255,255,255,.45)";ctx.font='italic 800 26px "Saira Condensed",sans-serif';[[0.18,"10"],[0.52,"22"]].forEach(([fy,t2])=>{const y=iy+span*fy-8;ctx.textAlign="left";ctx.fillText(t2,ix+10,y);ctx.textAlign="right";ctx.fillText(t2,ix+iw-10,y)});
   ctx.save();ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=6;ctx.lineCap="round";const cx2=W/2;ctx.beginPath();ctx.moveTo(cx2-36,tryY);ctx.lineTo(cx2-36,tryY-52);ctx.moveTo(cx2+36,tryY);ctx.lineTo(cx2+36,tryY-52);ctx.moveTo(cx2-36,tryY-20);ctx.lineTo(cx2+36,tryY-20);ctx.stroke();ctx.fillStyle="#f2c21a";ctx.fillRect(cx2-42,tryY-20,12,20);ctx.fillRect(cx2+30,tryY-20,12,20);ctx.restore();
-  const picks=S.draft.picks;const rowsY=[py+22,py+120,py+218,py+316,py+414,py+512,py+604];const jw=112;
-  ROWS.forEach((r,ri)=>{const gap=r.length===4?210:r.length===3?220:200;const x0=W/2-(r.length-1)*gap/2;
+  const picks=S.draft.picks;const rowsY=[py+22,py+138,py+255,py+371,py+487,py+604];const jw=112;
+  ROWS.forEach((r,ri)=>{const gap=r.length===4?210:r.length===3?230:r.includes(9)?300:210;const x0=W/2-(r.length-1)*gap/2;
     r.forEach((slot,i)=>{const pid=picks[slot];const p=S.plantel[pid];const roles=[];if(p&&S.draft.kick===pid)roles.push("P");if(p&&S.draft.cap===pid)roles.push("C");
       drawJersey(ctx,x0+i*gap,rowsY[ri],jw,slot,p?surname(p):"",roles,p?fdiv(pid):null)})});
   // pie
