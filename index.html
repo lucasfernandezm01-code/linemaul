@@ -115,6 +115,9 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .mcard{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}.mcard b{font:800 30px/1 var(--display);color:var(--accent)}.mcard span{font-weight:600;font-size:14px}.mcard small{font-size:12px;color:var(--muted)}
 .mbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.mbar i{display:block;width:100%;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent)}.mbar span{font-size:11px}.mbar small{font-size:10px;color:var(--muted)}
 .mclubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.mclubs div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px solid var(--line)}
+.mplist{display:flex;flex-direction:column}.mprow{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line)}.mprow>.num{width:18px;text-align:right;flex:none}
+.mpn{display:flex;flex-direction:column;flex:1;min-width:0}.mpn small{color:var(--muted);font-size:12px}.mpv{display:flex;flex-direction:column;align-items:flex-end;flex:none}.mpv b{font-size:16px}.mpv small{color:var(--muted);font-size:11px}
+.mpsub{margin-top:12px}.mpsub h4{margin:0 0 2px;font:italic 700 13px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
 .mlist{display:flex;flex-direction:column;margin-top:8px}.murow{border-bottom:1px solid var(--line)}.murow summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;cursor:pointer;list-style:none}.murow summary::-webkit-details-marker{display:none}
 .murow .mu{display:flex;flex-direction:column;min-width:0}.murow .mu small{color:var(--muted);font-size:12px}.mtags{display:flex;gap:4px;flex:none}.mtags .tag{opacity:.45}.mtags .tag.on{opacity:1;background:var(--accent);color:var(--accent-fg)}.mdet{padding:4px 2px 12px}
 .swaps{border-bottom:1px solid var(--line);margin-bottom:6px;padding-bottom:6px}
@@ -1147,6 +1150,29 @@ function mMetrics(){const users=mUsers();const fs=sortedFechas().filter(f=>f.est
   const clubs={};users.forEach(u=>{const c=((S.equipos||{})[u]||{}).club;if(c)clubs[c]=(clubs[c]||0)+1});
   const ligas=Object.entries(S.ligas||{}).map(([code,L])=>({code,L,n:users.filter(u=>(((S.equipos||{})[u]||{}).ligas||[]).includes(code)).length}));
   return {users,cur,xvAll,prAll,perF,weeks,new7,new30,clubs,ligas}}
+/* jugadores más elegidos (solo titulares del XV) */
+function mPlayers(m){const scope=S.mScope||"fecha";const fids=scope==="fecha"&&m.cur?[m.cur.id]:m.perF.map(x=>x.f.id);
+  const cnt={},byG={},cap={},hc={};let teams=0;
+  for(const u of m.users){const t=(S.equipos||{})[u];for(const fid of fids){const e=entryOf(u,t,fid);if(!e||!e.picks)continue;let any=false;
+    for(const sl in e.picks){if(!isXV(sl))continue;const pid=e.picks[sl];if(!pid||!S.plantel[pid])continue;any=true;cnt[pid]=(cnt[pid]||0)+1;const g=SLOT_GROUP[sl];(byG[g]=byG[g]||{})[pid]=(byG[g][pid]||0)+1}
+    if(any){teams++;if(e.cap&&S.plantel[e.cap])cap[e.cap]=(cap[e.cap]||0)+1;if(e.hc)hc[e.hc]=(hc[e.hc]||0)+1}}}
+  return {scope,teams,cnt,byG,cap,hc}}
+function mPlayersHtml(m){const P=mPlayers(m);const view=S.mView||"general";const pc=n=>P.teams?Math.round(n*100/P.teams)+"%":"";
+  const top=(obj,n)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  const row=(pid,n,i)=>{const p=S.plantel[pid];return `<div class="mprow"><span class="num muted">${i+1}</span><span class="mpn"><b>${esc(p.n)}</b><small>${esc(shortClub(p.d))} · ${esc(posNames(p))}</small></span><span class="mpv"><b class="num">${n}</b><small>${pc(n)}</small></span></div>`};
+  let body="";
+  if(!P.teams)body=`<p class="muted small" style="margin:0">Todavía no hay equipos armados${P.scope==="fecha"?" en esta fecha":""}.</p>`;
+  else if(view==="general"){body=top(P.cnt,15).map(([pid,n],i)=>row(pid,n,i)).join("");
+    const c=top(P.cap,5),h=top(P.hc,5);
+    body+=`<div class="mpsub"><h4>Capitanes más elegidos</h4>${c.map(([pid,n],i)=>row(pid,n,i)).join("")||'<p class="muted small">—</p>'}</div>`;
+    body+=`<div class="mpsub"><h4>Head Coach más elegidos</h4>${h.map(([cl,n],i)=>`<div class="mprow"><span class="num muted">${i+1}</span><span class="mpn"><b>${esc(coachOf(cl)||cl)}</b><small>${esc(cl)}</small></span><span class="mpv"><b class="num">${n}</b><small>${pc(n)}</small></span></div>`).join("")||'<p class="muted small">—</p>'}</div>`}
+  else if(view==="puesto")body=Object.keys(GROUPS).map(g=>{const l=top(P.byG[g]||{},3);return l.length?`<div class="mpsub"><h4>${GROUPS[g].n}</h4>${l.map(([pid,n],i)=>row(pid,n,i)).join("")}</div>`:""}).join("");
+  else body=DIVS.map(d=>{const l=top(Object.fromEntries(Object.entries(P.cnt).filter(([pid])=>S.plantel[pid]&&S.plantel[pid].d===d)),3);return l.length?`<div class="mpsub"><h4>${esc(d)}</h4>${l.map(([pid,n],i)=>row(pid,n,i)).join("")}</div>`:""}).join("");
+  const chip=(attr,k,n,cur)=>`<button class="chip" data-${attr}="${k}" aria-pressed="${cur===k}">${n}</button>`;
+  return `<div class="card"><h3>Jugadores más elegidos</h3><div class="chips" role="group">${chip("mscope","fecha",m.cur?esc(m.cur.nombre):"Fecha actual",P.scope)}${chip("mscope","temp","Toda la temporada",P.scope)}</div>
+  <div class="chips" role="group">${chip("mview","general","General",view)}${chip("mview","puesto","Por puesto",view)}${chip("mview","club","Por club",view)}</div>
+  <p class="small muted" style="margin:0">Solo titulares del XV. El % es sobre ${P.teams} equipo${P.teams===1?"":"s"} armado${P.teams===1?"":"s"}${P.scope==="temp"?" (sumando todas las fechas)":""}.</p><div class="mplist">${body}</div></div>`}
+document.addEventListener("click",e=>{const a=e.target.closest("[data-mscope],[data-mview]");if(!a)return;if(a.dataset.mscope)S.mScope=a.dataset.mscope;else S.mView=a.dataset.mview;render()});
 function adminMetricas(){const m=mMetrics();const cur=m.cur;const pc=(a,b)=>b?Math.round(a*100/b)+"%":"–";
   const curXV=cur?m.users.filter(u=>mHasXV(u,cur.id)).length:0,curPr=cur?m.users.filter(u=>mHasPr(u,cur.id)).length:0;
   const card=(v,l,sub)=>`<div class="mcard"><b class="num">${v}</b><span>${l}</span>${sub?`<small>${sub}</small>`:""}</div>`;
@@ -1164,6 +1190,7 @@ function adminMetricas(){const m=mMetrics();const cur=m.cur;const pc=(a,b)=>b?Ma
   <div class="card"><h3>Nuevos usuarios por semana</h3><div class="mbars">${bars}</div><p class="small muted" style="margin:6px 0 0">Últimas 10 semanas. Pasá el dedo o el mouse por cada barra para ver el total acumulado.</p></div>
   ${fRows?`<div class="card"><h3>Participación por fecha</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="r">Fantasy</th><th class="r">Prode</th><th class="r">Activos</th></tr></thead><tbody>${fRows}</tbody></table></div></div>`:""}
   ${clubs.length?`<div class="card"><h3>Usuarios por club</h3><div class="mclubs">${clubs.map(([c,n])=>`<div><span>${esc(c)}</span><b class="num">${n}</b></div>`).join("")}</div></div>`:""}
+  ${mPlayersHtml(m)}
   <div class="card"><h3>Usuarios</h3><input type="text" id="mq" placeholder="Buscar por equipo o club" autocomplete="off"><div class="mlist">${uRows||`<p class="muted small">Todavía no hay usuarios.</p>`}</div>${users.length>300?`<p class="small muted">Mostrando los 300 más nuevos de ${users.length}.</p>`:""}<p class="small muted" style="margin:6px 0 0">Tocá un usuario para ver su XV de la fecha actual (como admin lo ves aunque la fecha esté abierta).</p></div>
   ${lRows?`<div class="card"><h3>Torneos privados</h3><div class="tbl-wrap"><table><thead><tr><th>Torneo</th><th>Código</th><th class="r">Miembros</th></tr></thead><tbody>${lRows}</tbody></table></div></div>`:""}
   <div class="row"><button class="btn" id="mCopy">Copiar resumen</button><span class="small muted">Para pegar en un mail o una presentación.</span></div>`}
