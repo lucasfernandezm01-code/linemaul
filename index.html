@@ -111,6 +111,12 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .banner.cambios{align-items:center;gap:12px}.banner.cambios b{font-family:var(--body);text-transform:none;letter-spacing:0}
 .cdots{display:flex;gap:4px;flex:none}.cdots i{width:12px;height:12px;border-radius:50%;background:var(--accent)}.cdots i.u{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
 .banner.cambios.sin .cdots i.u{box-shadow:inset 0 0 0 2px var(--accent);opacity:.6}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mcard{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}.mcard b{font:800 30px/1 var(--display);color:var(--accent)}.mcard span{font-weight:600;font-size:14px}.mcard small{font-size:12px;color:var(--muted)}
+.mbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.mbar i{display:block;width:100%;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent)}.mbar span{font-size:11px}.mbar small{font-size:10px;color:var(--muted)}
+.mclubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.mclubs div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px solid var(--line)}
+.mlist{display:flex;flex-direction:column;margin-top:8px}.murow{border-bottom:1px solid var(--line)}.murow summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px;cursor:pointer;list-style:none}.murow summary::-webkit-details-marker{display:none}
+.murow .mu{display:flex;flex-direction:column;min-width:0}.murow .mu small{color:var(--muted);font-size:12px}.mtags{display:flex;gap:4px;flex:none}.mtags .tag{opacity:.45}.mtags .tag.on{opacity:1;background:var(--accent);color:var(--accent-fg)}.mdet{padding:4px 2px 12px}
 .swaps{border-bottom:1px solid var(--line);margin-bottom:6px;padding-bottom:6px}
 .prow{display:flex;justify-content:center;align-items:flex-start;gap:clamp(12px,5vw,28px);position:relative}.prow.four{gap:clamp(4px,2.6vw,20px)}.prow.mid{gap:clamp(28px,12vw,64px)}
 .slot{appearance:none;border:0;background:rgba(0,0,0,.18);color:#fff;border-radius:10px;padding:6px 4px 7px;width:88px;min-width:0;flex:0 1 88px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;position:relative;font-family:var(--body)}
@@ -393,7 +399,7 @@ function horarios(sab){const [y,mo,da]=sab.split("-").map(Number);const pad=n=>S
 
 const S={db:null,user:null,uid:null,isOwner:false,ready:false,
   home:true,plantel:{},fechas:[],pts:Object.assign({},DEF_PTS),equipos:{},kits:{},coaches:{},prode:{},prDraft:{},game:(()=>{try{return localStorage.getItem("gdt-game")==="prode"?"prode":"dt"}catch(e){return "dt"}})(),
-  tab:"xv",ligas:{},liga:null,adminTab:"plantel",fechaSel:null,tablaSel:"general",open:null,
+  tab:"xv",ligas:{},liga:null,adminTab:"metricas",fechaSel:null,tablaSel:"general",open:null,
   draft:null,draftKey:null,dirty:false,copiedFrom:null,
   statsFecha:null,statsDiv:"Alumni",statsDraft:null,statsDirty:false,saving:false};
 
@@ -1026,7 +1032,7 @@ function detailHtml(t,fid,uid){
   if(!fid)return `<span class="muted small">Sin fechas con puntos todavía.</span>`;
   const e=entryOf(uid,t,fid);if(!e||!e.picks||!Object.keys(e.picks).length)return `<span class="muted small">No armó equipo para esta fecha.</span>`;
   const f=S.fechas.find(x=>x.id===fid);const pub=f&&f.estado==="final";const st=fechaStats(fid);
-  if(f&&f.estado==="abierta"&&t!==myTeam())return `<div class="small muted" style="display:flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Este XV se ve cuando cierre ${esc(f.nombre)}. Así nadie copia.</div>`;
+  if(f&&f.estado==="abierta"&&t!==myTeam()&&!S.isOwner)return `<div class="small muted" style="display:flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Este XV se ve cuando cierre ${esc(f.nombre)}. Así nadie copia.</div>`;
   return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">${Array.from({length:15},(_,i)=>i+1).map(s=>{const pid=e.picks[s];const p=S.plantel[pid];if(!p)return `<div class="small muted">#${s} —</div>`;
     const bd=ROLES.filter(r=>e[r.k]===pid).map(r=>`<span class="rb ${r.k}">${r.b}</span>`).join(" ");
     return `<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid]):"–"}</b></div>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);return b.length?`<div class="small muted" style="margin-top:6px">Suplentes: ${b.map(p=>esc(surname(p))).join(", ")}</div>`:""})()}`;
@@ -1124,11 +1130,52 @@ function parsePuesto(s){const n=norm(s);if(/^\d{1,2}$/.test(n))return SLOT_GROUP
 function parseDiv(s){const n=norm(s).replace(/[\s\-._]/g,"");const m={alumni:"Alumni",atleticodelrosario:"Atlético del Rosario",atleticorosario:"Atlético del Rosario",adr:"Atlético del Rosario",belgrano:"Belgrano",belgranoathletic:"Belgrano",buenosaires:"Buenos Aires",bacrc:"Buenos Aires",casi:"CASI",champagnat:"Champagnat",cuba:"CUBA",hindu:"Hindú",hinduclub:"Hindú",laplata:"La Plata",lprc:"La Plata",losmatreros:"Los Matreros",matreros:"Los Matreros",lostilos:"Los Tilos",tilos:"Los Tilos",newman:"Newman",regatas:"Regatas",regatasbellavista:"Regatas",sic:"SIC"};return m[n]||null}
 function newId(){return "p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
+/* ---------- métricas (admin) ---------- */
+function mUsers(){const ids=new Set([...Object.keys(S.equipos||{}),...Object.keys(S.prode||{})]);return [...ids]}
+function mSince(uid){const t=(S.equipos||{})[uid];if(t&&t.creado)return Date.parse(t.creado);let m=Infinity;
+  if(t&&t.fechas)for(const e of Object.values(t.fechas)){const a=e&&e.at&&Date.parse(e.at);if(a&&a<m)m=a}
+  const pr=(S.prode||{})[uid];if(pr&&pr.at){const a=Date.parse(pr.at);if(a&&a<m)m=a}return m===Infinity?null:m}
+const mHasXV=(uid,fid)=>{const e=entryOf(uid,(S.equipos||{})[uid],fid);return !!(e&&e.picks&&Object.values(e.picks).some(Boolean))};
+const mHasPr=(uid,fid)=>{const pr=(S.prode||{})[uid];const d=pr&&pr.fechas&&pr.fechas[fid];return !!(d&&Object.keys(d).length)};
+const mEverXV=uid=>{const t=(S.equipos||{})[uid];return !!(t&&t.fechas&&Object.keys(t.fechas).some(f=>mHasXV(uid,f)))};
+const mEverPr=uid=>{const pr=(S.prode||{})[uid];return !!(pr&&pr.fechas&&Object.keys(pr.fechas).some(f=>mHasPr(uid,f)))};
+function mMetrics(){const users=mUsers();const fs=sortedFechas().filter(f=>f.estado!=="proxima");const cur=fs.length?(S.fechas.find(x=>x.id===defaultFecha())||fs[fs.length-1]):null;
+  const xvAll=users.filter(mEverXV).length,prAll=users.filter(mEverPr).length;
+  const perF=fs.map(f=>({f,xv:users.filter(u=>mHasXV(u,f.id)).length,pr:users.filter(u=>mHasPr(u,f.id)).length}));
+  const now=Date.now(),W=7*864e5;const weeks=[];for(let i=9;i>=0;i--){const a=now-(i+1)*W,b=now-i*W;weeks.push({a,b,n:users.filter(u=>{const x=mSince(u);return x&&x>=a&&x<b}).length})}
+  const new7=weeks[9].n,new30=users.filter(u=>{const x=mSince(u);return x&&x>=now-30*864e5}).length;
+  const clubs={};users.forEach(u=>{const c=((S.equipos||{})[u]||{}).club;if(c)clubs[c]=(clubs[c]||0)+1});
+  const ligas=Object.entries(S.ligas||{}).map(([code,L])=>({code,L,n:users.filter(u=>(((S.equipos||{})[u]||{}).ligas||[]).includes(code)).length}));
+  return {users,cur,xvAll,prAll,perF,weeks,new7,new30,clubs,ligas}}
+function adminMetricas(){const m=mMetrics();const cur=m.cur;const pc=(a,b)=>b?Math.round(a*100/b)+"%":"–";
+  const curXV=cur?m.users.filter(u=>mHasXV(u,cur.id)).length:0,curPr=cur?m.users.filter(u=>mHasPr(u,cur.id)).length:0;
+  const card=(v,l,sub)=>`<div class="mcard"><b class="num">${v}</b><span>${l}</span>${sub?`<small>${sub}</small>`:""}</div>`;
+  const mx=Math.max(1,...m.weeks.map(w=>w.n));let acc=m.users.length-m.weeks.reduce((a,w)=>a+w.n,0);
+  const bars=m.weeks.map(w=>{acc+=w.n;const d=new Date(w.b-864e5);return `<div class="mbar" title="${w.n} nuevos · ${acc} en total"><span class="num">${w.n||""}</span><i style="height:${Math.round(w.n/mx*100)}%"></i><small>${d.getDate()}/${d.getMonth()+1}</small></div>`}).join("");
+  const fRows=m.perF.slice(-12).reverse().map(x=>`<tr><td>${esc(x.f.nombre)}</td><td class="r num">${x.xv}</td><td class="r num">${x.pr}</td><td class="r num muted">${pc(Math.max(x.xv,x.pr),m.users.length)}</td></tr>`).join("");
+  const clubs=Object.entries(m.clubs).sort((a,b)=>b[1]-a[1]);
+  const users=[...m.users].sort((a,b)=>(mSince(b)||0)-(mSince(a)||0));
+  const uRows=users.slice(0,300).map(u=>{const t=(S.equipos||{})[u]||{};const nl=(t.ligas||[]).length;const x=cur&&mHasXV(u,cur.id),p=cur&&mHasPr(u,cur.id);const sn=mSince(u);
+    return `<details class="murow" data-q="${esc(((t.nombre||"")+" "+(t.club||"")).toLowerCase())}"><summary><span class="mu"><b>${esc(t.nombre||"(sin equipo)")}</b><small><span data-who="${esc(u)}"></span>${t.club?" · "+esc(t.club):""}${sn?" · desde "+new Date(sn).toLocaleDateString("es-AR"):""}</small></span><span class="mtags"><span class="tag${x?" on":""}">XV</span><span class="tag${p?" on":""}">Prode</span>${nl?`<span class="tag">${nl} torneo${nl>1?"s":""}</span>`:""}</span></summary><div class="mdet">${cur?detailHtml(t,cur.id,u):""}</div></details>`}).join("");
+  const lRows=m.ligas.sort((a,b)=>b.n-a.n).map(x=>`<tr><td>${esc(x.L.nombre)}<div class="small muted">${x.L.juego==="prode"?"Prode":"Fantasy"} · ${esc(((S.equipos||{})[x.L.owner]||{}).nombre||"")}</div></td><td class="num">${esc(x.code)}</td><td class="r num">${x.n}</td></tr>`).join("");
+  setTimeout(()=>fillNames(users.slice(0,300)),0);
+  return `<div class="mgrid">${card(m.users.length,"Registrados",`+${m.new7} esta semana · +${m.new30} en 30 días`)}${card(m.xvAll,"Jugaron Fantasy",pc(m.xvAll,m.users.length)+" de los registrados")}${card(m.prAll,"Jugaron Prode",pc(m.prAll,m.users.length)+" de los registrados")}${card(m.ligas.length,"Torneos privados",m.ligas.reduce((a,x)=>a+x.n,0)+" participaciones")}</div>
+  ${cur?`<div class="card"><h3>${esc(cur.nombre)} (actual)</h3><div class="mgrid">${card(curXV,"XV armados",pc(curXV,m.users.length))}${card(curPr,"Prodes",pc(curPr,m.users.length))}</div></div>`:""}
+  <div class="card"><h3>Nuevos usuarios por semana</h3><div class="mbars">${bars}</div><p class="small muted" style="margin:6px 0 0">Últimas 10 semanas. Pasá el dedo o el mouse por cada barra para ver el total acumulado.</p></div>
+  ${fRows?`<div class="card"><h3>Participación por fecha</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="r">Fantasy</th><th class="r">Prode</th><th class="r">Activos</th></tr></thead><tbody>${fRows}</tbody></table></div></div>`:""}
+  ${clubs.length?`<div class="card"><h3>Usuarios por club</h3><div class="mclubs">${clubs.map(([c,n])=>`<div><span>${esc(c)}</span><b class="num">${n}</b></div>`).join("")}</div></div>`:""}
+  <div class="card"><h3>Usuarios</h3><input type="text" id="mq" placeholder="Buscar por equipo o club" autocomplete="off"><div class="mlist">${uRows||`<p class="muted small">Todavía no hay usuarios.</p>`}</div>${users.length>300?`<p class="small muted">Mostrando los 300 más nuevos de ${users.length}.</p>`:""}<p class="small muted" style="margin:6px 0 0">Tocá un usuario para ver su XV de la fecha actual (como admin lo ves aunque la fecha esté abierta).</p></div>
+  ${lRows?`<div class="card"><h3>Torneos privados</h3><div class="tbl-wrap"><table><thead><tr><th>Torneo</th><th>Código</th><th class="r">Miembros</th></tr></thead><tbody>${lRows}</tbody></table></div></div>`:""}
+  <div class="row"><button class="btn" id="mCopy">Copiar resumen</button><span class="small muted">Para pegar en un mail o una presentación.</span></div>`}
+document.addEventListener("input",e=>{if(e.target.id!=="mq")return;const q=e.target.value.trim().toLowerCase();document.querySelectorAll(".murow").forEach(r=>{r.hidden=!!q&&!r.dataset.q.includes(q)})});
+document.addEventListener("click",async e=>{if(e.target.id!=="mCopy")return;const m=mMetrics();const c=m.cur;
+  const txt=`Line & Maul · ${new Date().toLocaleDateString("es-AR")}\nRegistrados: ${m.users.length} (+${m.new7} esta semana, +${m.new30} en 30 días)\nJugaron Fantasy: ${m.xvAll}\nJugaron Prode: ${m.prAll}\nTorneos privados: ${m.ligas.length}`+(c?`\n${c.nombre}: ${m.users.filter(u=>mHasXV(u,c.id)).length} XV armados, ${m.users.filter(u=>mHasPr(u,c.id)).length} prodes`:"");
+  try{await navigator.clipboard.writeText(txt);toast("Resumen copiado")}catch(err){toast("No se pudo copiar")}});
 function renderAdmin(){
   if(!S.isOwner){$("#view").innerHTML="";return}
-  const at=S.adminTab;const sub=[["plantel","Plantel"],["fechas","Fechas"],["alin","Formaciones"],["puntos","Cargar puntos"],["camis","Clubes"],["valores","Puntaje"],["importar","Importar"]];
+  const at=S.adminTab||"metricas";const sub=[["metricas","Métricas"],["plantel","Plantel"],["fechas","Fechas"],["alin","Formaciones"],["puntos","Cargar puntos"],["camis","Clubes"],["valores","Puntaje"],["importar","Importar"]];
   let html=`<section class="view"><div class="chips" role="group" aria-label="Admin">${sub.map(([k,n])=>`<button class="chip" data-atab="${k}" aria-pressed="${at===k}">${n}</button>`).join("")}</div>`;
-  if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
+  if(at==="metricas")html+=adminMetricas();else if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
   $("#view").innerHTML=html+"</section>";
 }
 function adminPlantel(){
@@ -1503,7 +1550,7 @@ function makeDb(){
     fechas:async()=>{const m={};(await sbAll("fechas","id,data")).forEach(r=>m[r.id]=r.data||{});return m},
     equipos:async()=>{const [ps,es,ls]=await Promise.all([sbAll("profiles","*"),sbAll("equipos","user_id,fecha_id,data"),sbAll("liga_miembros","code,user_id")]);
       const m={};const get=u=>m[u]||(m[u]={nombre:"",club:"",fechas:{},ligas:[]});
-      ps.forEach(p=>{const t=get(p.id);t.nombre=p.equipo||"";t.club=p.club||"";t.nombreCambios=+p.equipo_cambios||0});
+      ps.forEach(p=>{const t=get(p.id);t.nombre=p.equipo||"";t.club=p.club||"";t.nombreCambios=+p.equipo_cambios||0;t.creado=p.created_at||null});
       es.forEach(e=>{get(e.user_id).fechas[e.fecha_id]=e.data});
       ls.forEach(l=>{get(l.user_id).ligas.push(l.code)});return m},
     prode:async()=>{const rows=await sbAll("prode","user_id,fecha_id,data,comps,updated_at");const m={};
