@@ -511,7 +511,9 @@ const pushOK=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notific
 const N={sub:null,prefs:{},loaded:false};
 function b64u(s){const p="=".repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))}
 async function notifLoad(){if(!pushOK()||!S.uid)return;try{const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();N.sub=sub;
-  if(sub){const {data}=await sb.from("push_subs").select("prefs").eq("endpoint",sub.endpoint).maybeSingle();N.prefs=(data&&data.prefs)||{}}}catch(e){}N.loaded=true}
+  if(sub){const {data}=await sb.from("push_subs").select("prefs").eq("endpoint",sub.endpoint).maybeSingle();N.prefs=(data&&data.prefs)||{};
+    /* el celular tenía el permiso pero la base no lo tenía guardado: se vuelve a guardar solo */
+    if(!data&&Notification.permission==="granted")await sb.from("push_subs").upsert({endpoint:sub.endpoint,user_id:S.uid,sub:sub.toJSON(),prefs:{},updated_at:new Date().toISOString()},{onConflict:"endpoint"})}}catch(e){}N.loaded=true}
 async function notifOn(){if(!S.uid){toast("Ingresá a tu cuenta para activar las notificaciones");return false}
   if(!pushOK()){toast(isIOS()?"En iPhone primero instalá la app (Compartir → Agregar a inicio) y abrila desde el ícono.":"Este navegador no permite notificaciones.");return false}
   try{const perm=await Notification.requestPermission();if(perm!=="granted"){toast("No diste permiso. Lo podés cambiar en la configuración del celular.");return false}
