@@ -54,6 +54,7 @@ body.is-home{background-image:radial-gradient(ellipse at 0% 0%,rgba(124,26,14,.5
 .hgame.dt{background:linear-gradient(135deg,#6a1a0f,#2b130f 75%);border-color:#8a2a1a}
 .hgame.adm{background:linear-gradient(135deg,#3a3320,#1a1610 75%);border-color:#6b5a26}
 body[data-game="admin"] [aria-label="Admin del Prode"]{display:none!important}
+.nov{border-color:var(--accent)}.novi{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.novi ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 .hgame.prode{background:linear-gradient(135deg,#1f3a86,#0b1430 75%);border-color:#2f4690}
 .hgame img{width:74px;height:74px;flex:none;border-radius:50%;box-shadow:0 6px 18px rgba(0,0,0,.45)}
 .hgame .hb{flex:1;min-width:0}
@@ -492,7 +493,7 @@ const LM_LOGO="data:image/webp;base64,UklGRjbfAABXRUJQVlA4WAoAAAAQAAAA/wEA/wEAQU
 const HOME_SLOGAN="El juego del rugby argentino";
 function renderHome(){const h=$("#home");if(!h)return;
   h.innerHTML=`<img class="hlogo" src="${LM_LOGO}" alt="Line & Maul"><div class="hslogan">${esc(HOME_SLOGAN)}</div><div class="hpick">Elegí tu juego</div>
-  <div class="hgames">${["dt","prode"].map(k=>{const g=GAME_TXT[k];return `<button class="hgame ${k}" data-hgame="${k}"><img src="${LOGOS[k]}" alt=""><span class="hb"><span class="eyebrow">${esc(g.eye)}</span><span class="ht">${g.t}</span><small>${esc(g.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`}).join("")}${S.isOwner?`<button class="hgame adm" data-hgame="admin"><img src="${LM_LOGO}" alt=""><span class="hb"><span class="eyebrow">Solo para vos</span><span class="ht">${GAME_TXT.admin.t}</span><small>${esc(GAME_TXT.admin.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`:""}</div>${notifHomeHtml()}${installHtml()}`}
+  <div class="hgames">${["dt","prode"].map(k=>{const g=GAME_TXT[k];return `<button class="hgame ${k}" data-hgame="${k}"><img src="${LOGOS[k]}" alt=""><span class="hb"><span class="eyebrow">${esc(g.eye)}</span><span class="ht">${g.t}</span><small>${esc(g.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`}).join("")}${S.isOwner?`<button class="hgame adm" data-hgame="admin"><img src="${LM_LOGO}" alt=""><span class="hb"><span class="eyebrow">Solo para vos${novPend().length?` · 📥 ${novPend().length} novedad${novPend().length>1?"es":""}`:""}</span><span class="ht">${GAME_TXT.admin.t}</span><small>${esc(GAME_TXT.admin.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`:""}</div>${notifHomeHtml()}${installHtml()}`}
 /* app instalable: botón en Android/Chrome, instrucciones en iPhone */
 let _bip=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();_bip=e;if(S.home)render()});
 window.addEventListener("appinstalled",()=>{_bip=null;try{localStorage.setItem("lm-inst","1")}catch(e){}if(S.home)render()});
@@ -1323,7 +1324,8 @@ async function recalcFecha(f){const rows=[];
 function renderAdmin(){
   if(!S.isOwner){$("#view").innerHTML="";return}
   const at=S.adminTab||"metricas";const sub=[["metricas","Métricas"],["avisos","Notificaciones"],["plantel","Plantel"],["fechas","Fechas"],["alin","Formaciones"],["puntos","Cargar puntos"],["camis","Clubes"],["valores","Puntaje"],["importar","Importar"]];
-  let html=`<section class="view">${S.game==="admin"?hubChips():`<div class="chips" role="group" aria-label="Admin">${sub.map(([k,n])=>`<button class="chip" data-atab="${k}" aria-pressed="${at===k}">${n}</button>`).join("")}</div>`}`;
+  if(S.game==="admin")novLoad();
+  let html=`<section class="view">${S.game==="admin"?novHtml()+hubChips():`<div class="chips" role="group" aria-label="Admin">${sub.map(([k,n])=>`<button class="chip" data-atab="${k}" aria-pressed="${at===k}">${n}</button>`).join("")}</div>`}`;
   if(at==="metricas")html+=adminMetricas();else if(at==="avisos"){html+=adminAvisos();setTimeout(loadAvisos,0)}else if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
   $("#view").innerHTML=html+"</section>";
 }
@@ -1643,7 +1645,7 @@ function renderPReglas(){
 }
 
 /* ---------- Admin del prode ---------- */
-function renderPAdmin(){renderPAdmin0();if(S.game==="admin"){const sec=$("#view section");if(sec)sec.insertAdjacentHTML("afterbegin",hubChips())}}
+function renderPAdmin(){renderPAdmin0();if(S.game==="admin"){novLoad();const sec=$("#view section");if(sec)sec.insertAdjacentHTML("afterbegin",novHtml()+hubChips())}}
 function renderPAdmin0(){
   if(!S.isOwner){$("#view").innerHTML="";return}
   const fs=sortedFechas();if(!fs.length){$("#view").innerHTML=`<section class="view"><div class="empty">Creá una fecha primero en Fechas → Fechas y horarios.</div></section>`;return}
@@ -1764,7 +1766,7 @@ async function applySession(session){const u=session&&session.user?session.user:
   if(u){try{let {data:p}=await sb.from("profiles").select("id,nombre,equipo,club").eq("id",uid).maybeSingle();
       if(!p){const nombre=((u.user_metadata&&u.user_metadata.nombre)||(u.email||"").split("@")[0]).slice(0,40);await sb.from("profiles").insert({id:uid,nombre});p={id:uid,nombre}}
       S.me={email:u.email,nombre:p.nombre||""}}catch(e){S.me={email:u.email,nombre:""}}
-    try{const {data}=await sb.rpc("is_admin");S.isOwner=!!data}catch(e){}}
+    try{const {data}=await sb.rpc("is_admin");S.isOwner=!!data;if(S.isOwner)setTimeout(()=>novLoad(true),1500)}catch(e){}}
   renderAuthBtn();if(S.db)await S.db.refreshAll();N.loaded=false;N.sub=null;N.prefs={};render();if(uid)notifLoad().then(()=>{if(S.home)render()})}
 function renderAuthBtn(){const b=$("#authBtn");if(!b)return;b.hidden=!sb;b.textContent=S.uid?((S.me&&S.me.nombre)||"Mi cuenta").split(" ")[0]:"Ingresar";b.setAttribute("aria-label",S.uid?"Mi cuenta":"Ingresar o crear cuenta")}
 function openAuth(mode){const el=$("#sheet");el.hidden=false;sheetRole="auth";S.authMode=mode||(S.uid?"cuenta":"in");drawAuth()}
@@ -1812,6 +1814,39 @@ async function runImport(txt){let d;try{d=JSON.parse(txt)}catch(e){throw new Err
   if(d.fechas)for(const [id,v] of Object.entries(d.fechas)){await S.db.doc("fechas/"+id).update(v);res.push(v.nombre||id)}
   if(Array.isArray(d.borrar_fechas))for(const id of d.borrar_fechas){await S.db.doc("fechas/"+id).delete();res.push("borrada "+id)}
   return res}
+/* ---------- novedades: Claude las sube a GitHub (carpeta novedades/) y el admin las carga con un toque ---------- */
+const NOV={list:null,at:0,data:{},busy:false};
+async function novLoad(force){if(!S.isOwner)return;if(!force&&NOV.list&&Date.now()-NOV.at<120000)return;NOV.at=Date.now();
+  try{const r=await fetch("novedades/index.json?t="+Date.now(),{cache:"no-store"});NOV.list=r.ok?((await r.json()).items||[]):[]}catch(e){NOV.list=NOV.list||[]}
+  for(const x of novPend()){if(NOV.data[x.id])continue;try{const r=await fetch("novedades/"+x.file+"?t="+Date.now(),{cache:"no-store"});if(r.ok)NOV.data[x.id]=await r.json()}catch(e){}}
+  scheduleRender()}
+function novState(){return (S.db&&S.db.cache&&S.db.cache.config&&S.db.cache.config.novedades)||{}}
+function novPend(){const ap=new Set(novState().aplicadas||[]);return (NOV.list||[]).filter(x=>!ap.has(x.id))}
+function novResumen(d){const out=[];if(!d)return ["Cargando…"];
+  if(d.fechas)for(const [id,v] of Object.entries(d.fechas)){const f=S.fechas.find(x=>x.id===id);const nm=v.nombre||(f&&f.nombre)||id;const p=[];
+    if(!f)p.push("fecha nueva");if(v.partidos)p.push(`${v.partidos.length} partidos`);if(v.alin)p.push(`formaciones de ${Object.keys(v.alin).length} clubes`);if(v.marcador)p.push(`${Object.keys(v.marcador).length} resultados`);if(v.stats)p.push(`puntos de ${Object.keys(v.stats).length} jugadores`);if(v.res)p.push("resultados del Head Coach");if(v.estado==="final")p.push("publica los puntos");
+    out.push(`${nm}: ${p.join(", ")||"datos"}`)}
+  if(d.config)for(const [k,v] of Object.entries(d.config)){if(k==="plantel"&&v&&v.players)out.push(`Plantel: ${Object.keys(v.players).length} jugadores nuevos o corregidos`);else if(k==="camisetas")out.push("Camisetas");else if(k==="entrenadores")out.push("Entrenadores");else out.push("Ajustes: "+k)}
+  if(Array.isArray(d.borrar_fechas)&&d.borrar_fechas.length)out.push(`Borra ${d.borrar_fechas.length} fecha${d.borrar_fechas.length>1?"s":""}`);return out}
+function novHtml(){if(!S.isOwner)return "";const p=novPend();const u=(novState().undo||[]).slice(-1)[0];if(!p.length&&!u)return "";
+  return `<div class="card nov"><h3>${p.length?`📥 Novedades para cargar (${p.length})`:"Novedades"}</h3>
+    ${p.map(x=>`<div class="novi"><div><b>${esc(x.titulo||x.id)}</b><ul>${novResumen(NOV.data[x.id]).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></div><button class="btn primary sm" data-novgo="${esc(x.id)}" ${NOV.data[x.id]&&!NOV.busy?"":"disabled"}>Cargar</button></div>`).join("")}
+    ${u?`<div class="row small muted" style="justify-content:space-between;gap:8px;flex-wrap:nowrap"><span>Última carga: ${esc(u.titulo||u.id)}</span><button class="btn sm" data-novundo="${esc(u.id)}" ${NOV.busy?"disabled":""}>Deshacer</button></div>`:""}</div>`}
+async function novApply(id){const d=NOV.data[id];const it=(NOV.list||[]).find(x=>x.id===id)||{};if(!d||NOV.busy)return;NOV.busy=true;render();
+  const C=S.db.cache||{};const clone=o=>o==null?null:JSON.parse(JSON.stringify(o));
+  const undo={id,titulo:it.titulo||id,fechas:{},config:{}};
+  for(const fid of Object.keys(d.fechas||{}).concat(d.borrar_fechas||[]))undo.fechas[fid]=clone((C.fechas||{})[fid]);
+  for(const k of Object.keys(d.config||{}))undo.config[k]=clone((C.config||{})[k]);
+  try{await runImport(JSON.stringify(d));const st=novState();
+    await S.db.doc("config/novedades").set({aplicadas:[...(st.aplicadas||[]),id].slice(-200),undo:[...(st.undo||[]),undo].slice(-3)});toast("Cargado: "+(it.titulo||id))}
+  catch(err){toast("No se pudo cargar: "+(err.message||"error"))}NOV.busy=false;render()}
+async function novUndo(id){const st=novState();const u=(st.undo||[]).find(x=>x.id===id);if(!u||NOV.busy)return;NOV.busy=true;render();
+  try{for(const [fid,prev] of Object.entries(u.fechas||{})){if(prev)await S.db.doc("fechas/"+fid).set(prev);else await S.db.doc("fechas/"+fid).delete()}
+    for(const [k,prev] of Object.entries(u.config||{})){if(prev)await S.db.doc("config/"+k).set(prev);else await S.db.doc("config/"+k).delete()}
+    await S.db.doc("config/novedades").set({aplicadas:(st.aplicadas||[]).filter(x=>x!==id),undo:(st.undo||[]).filter(x=>x.id!==id)});toast("Deshecho: "+(u.titulo||id))}
+  catch(err){toast("No se pudo deshacer")}NOV.busy=false;render()}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-novgo]");if(g&&!g.disabled){novApply(g.dataset.novgo);return}
+  const u=e.target.closest("[data-novundo]");if(u&&!u.disabled){if(u.dataset.arm!=="1"){u.dataset.arm="1";u.textContent="¿Seguro?";setTimeout(()=>{if(u.isConnected){u.dataset.arm="";u.textContent="Deshacer"}},3000);return}novUndo(u.dataset.novundo)}});
 $("#view").addEventListener("click",async e=>{if(e.target.id!=="impSeed"||!S.isOwner)return;const b=e.target;if(b.dataset.arm!=="1"){b.dataset.arm="1";b.textContent="¿Seguro? Tocá de nuevo";setTimeout(()=>{if(b.isConnected){b.dataset.arm="";b.textContent="Cargar datos iniciales"}},4000);return}
   b.disabled=true;try{const r=await fetch("datos/inicial.json",{cache:"no-store"});if(!r.ok)throw new Error();const out=await runImport(await r.text());toast("Cargado: "+out.join(", "))}catch(err){toast("No se pudieron cargar los datos iniciales")}b.disabled=false;b.dataset.arm="";b.textContent="Cargar datos iniciales"});
 $("#view").addEventListener("click",async e=>{if(e.target.id!=="impGo"||!S.isOwner)return;const b=e.target;const msg=$("#impMsg");b.disabled=true;msg.textContent="Importando…";
