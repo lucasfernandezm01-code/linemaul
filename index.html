@@ -471,9 +471,8 @@ window.addEventListener("appinstalled",()=>{_bip=null;try{localStorage.setItem("
 const isStandalone=()=>window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function installHtml(){if(isStandalone())return "";
-  if(_bip)return `<div class="inst"><span>📲 Instalá Line &amp; Maul en tu celular</span><button class="btn sm primary" id="instGo">Instalar</button></div>`;
-  if(isIOS())return `<div class="inst"><span>📲 Instalala en tu iPhone: tocá <b>Compartir</b> <svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-2px" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> y después <b>Agregar a inicio</b>.</span></div>`;
-  return ""}
+  const how=_bip?"":isIOS()?`Tocá <b>Compartir</b> <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> y después <b>Agregar a inicio</b>.`:`Abrí el menú del navegador (⋮) y tocá <b>Instalar app</b> o <b>Agregar a pantalla de inicio</b>.`;
+  return `<div class="inst"><span><b>📲 Instalala en tu celular</b>${how?`<br>${how}`:""}</span>${_bip?`<button class="btn sm primary" id="instGo">Instalar</button>`:""}</div>`}
 document.addEventListener("click",async e=>{if(e.target.closest("#instGo")&&_bip){_bip.prompt();try{await _bip.userChoice}catch(err){}_bip=null;render();return}
   if(e.target.closest("#instX")){try{localStorage.setItem("lm-inst-x","1")}catch(err){}render()}});
 if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
