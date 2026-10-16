@@ -836,7 +836,7 @@ function renderSheet(){
     else if(cnt[p.d]>=maxOf(f)&&!(curP&&fdiv(cur)===p.d)){why=`Ya tenés ${maxOf(f)} de ${p.d}`;dis=true}
     else if(sinCambios&&!ci.prev.has(id)){why=`Ya usaste los ${ci.max} cambios de la fecha`;dis=true}
     const sp=seasonPlayerPts(id);
-    return `<button class="pick${id===cur?" sel":""}" data-pick="${esc(id)}" ${dis||!editable?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>${esc(p.n)}</span>${alinOf(f,id)==="T"?`<span>${alinTag("T",false)}</span>`:""}${why?`<span class="why">${why}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(p.d))}</span><span class="tag num" title="Puntos en la temporada">${sp} pts</span></span></button>`}).join("");
+    return `<button class="pick${id===cur?" sel":""}" data-pick="${esc(id)}" ${dis||!editable?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>${esc(p.n)}</span>${(()=>{const t=alinOf(f,id)==="T",rv=rivalOf(f,p.d);return t||rv?`<span class="row" style="gap:8px;flex-wrap:nowrap;align-items:center">${t?alinTag("T",false):""}${rv?`<span class="small muted" style="white-space:nowrap">vs ${esc(shortClub(rv))}</span>`:""}</span>`:""})()}${why?`<span class="why">${why}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(p.d))}</span><span class="tag num" title="Puntos en la temporada">${sp} pts</span></span></button>`}).join("");
   const el=$("#sheet");el.hidden=false;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Elegir ${SLOT_NAME[slot]}">
     <div class="hd">
