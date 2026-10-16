@@ -372,7 +372,13 @@ function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTim
 function sortedFechas(){return S.fechas.filter(f=>!(f.soloProde&&S.game!=="prode")).sort((a,b)=>(a.orden||0)-(b.orden||0))}
 /* apellido para la camiseta: si el admin cargó uno (p.c) se usa ese; si no, se sacan los nombres de pila del principio */
 const NOMBRES=new Set("juan bautista cruz pablo manuel martin martín jose josé maria maría ignacio tomas tomás santiago francisco felipe pedro agustin agustín nicolas nicolás joaquin joaquín lucas mateo benjamin benjamín facundo gonzalo federico ramon ramón luis carlos miguel jeronimo jerónimo ezequiel lautaro valentin valentín thiago tiago bruno franco marcos matias matías patricio rodrigo diego sebastian sebastián andres andrés alejandro emiliano esteban gaston gastón german germán guido hernan hernán ivan iván julian julián leandro lorenzo marcelo mariano maximo máximo octavio rafael ricardo salvador simon simón tobias tobías vicente segundo cristobal cristóbal eliseo eugenio filippo rocco santos dante enzo gino hugo leo leon león".split(" "));
-function surname(n){if(n&&typeof n==="object")return (n.c&&String(n.c).trim())||surname(n.n||"");const w=String(n||"").trim().split(/\s+/);if(w.length<2)return w[0]||"";let i=1;while(i<w.length-1&&NOMBRES.has(w[i].toLowerCase()))i++;return w.slice(i).join(" ")}
+/* apellidos repetidos en el mismo club: se les agrega la inicial (R. Testoni / F. Testoni) */
+let _snMap=null,_snRef=null;
+function snDup(p){if(_snRef!==S.plantel){_snRef=S.plantel;_snMap={};for(const q of Object.values(S.plantel||{})){if(!q||q.c)continue;const k=q.d+"|"+surname(q.n||"").toLowerCase();(_snMap[k]=_snMap[k]||[]).push(q)}}
+  const l=_snMap[p.d+"|"+surname(p.n||"").toLowerCase()];return l&&l.length>1?l:null}
+function surname(n){if(n&&typeof n==="object"){if(n.c&&String(n.c).trim())return String(n.c).trim();const sn=surname(n.n||"");const dup=snDup(n);if(!dup)return sn;
+    const first=String(n.n||"").trim().split(/\s+/)[0]||"";const ini=first.charAt(0).toUpperCase()+".";
+    return dup.filter(q=>q!==n&&String(q.n||"").trim().charAt(0).toUpperCase()+"."===ini).length?first+" "+sn:ini+" "+sn}const w=String(n||"").trim().split(/\s+/);if(w.length<2)return w[0]||"";let i=1;while(i<w.length-1&&NOMBRES.has(w[i].toLowerCase()))i++;return w.slice(i).join(" ")}
 
 /* ---------- puntos ---------- */
 function playerPts(st){if(!st)return 0;let s=0;for(const [k] of STATS)s+=(+st[k]||0)*(+S.pts[k]||0);return s}
@@ -546,7 +552,7 @@ function kitArt(k,id,stroke){const bands=kitBands(k).map(b=>b[0]==="P"?`<polygon
 function jersey(num,name,empty,club){
   if(empty)return `<svg class="jsy" viewBox="0 0 64 60" aria-hidden="true"><path d="${J_PATH}" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.7)" stroke-width="1.4" stroke-dasharray="3 2.5" stroke-linejoin="round"/><text x="32" y="45" text-anchor="middle" class="jn" fill="rgba(255,255,255,.85)">${num}</text></svg>`;
   const id="jc"+num+"_"+(jersey._n=(jersey._n||0)+1);const k=kitOf(club);
-  let nm=String(name).toUpperCase().trim();if(nm.length>11&&nm.includes(" ")){const w=nm.split(/\s+/);nm=w[0]+" "+w[w.length-1][0]+".";}const fs=8.2;const est=nm.length*fs*0.56;const fit=est>27?` textLength="27" lengthAdjust="spacingAndGlyphs"`:"";
+  let nm=String(name).toUpperCase().trim();if(nm.length>11&&nm.includes(" ")){const w=nm.split(/\s+/);nm=/^\S\.$/.test(w[0])?w[0]+" "+w[1]:w[0]+" "+w[w.length-1][0]+"."}const fs=8.2;const est=nm.length*fs*0.56;const fit=est>27?` textLength="27" lengthAdjust="spacingAndGlyphs"`:"";
   return `<svg class="jsy" viewBox="0 0 64 60" aria-hidden="true">${kitArt(k,id,"rgba(0,0,0,.6)")}
     <text x="32" y="22" text-anchor="middle" class="jt" font-size="${fs}"${fit}>${esc(nm)}</text>
     <text x="32" y="46" text-anchor="middle" class="jn jt">${num}</text></svg>`;
@@ -699,7 +705,7 @@ function drawJersey(ctx,cx,top,w,num,name,roles,club){
   ctx.fillStyle="rgba(0,0,0,.45)";ctx.fill(new Path2D(NECK_IN));
   ctx.lineJoin="round";ctx.strokeStyle="rgba(0,0,0,.6)";ctx.lineWidth=.9;ctx.stroke(P);
   {const CP=new Path2D(COLLAR);ctx.fillStyle=K.cc;ctx.fill(CP);ctx.lineWidth=.6;ctx.strokeStyle="rgba(0,0,0,.6)";ctx.stroke(CP)}
-  let nm=String(name).toUpperCase().trim();if(nm.length>11&&nm.includes(" ")){const w2=nm.split(/\s+/);nm=w2[0]+" "+w2[w2.length-1][0]+"."}
+  let nm=String(name).toUpperCase().trim();if(nm.length>11&&nm.includes(" ")){const w2=nm.split(/\s+/);nm=/^\S\.$/.test(w2[0])?w2[0]+" "+w2[1]:w2[0]+" "+w2[w2.length-1][0]+"."}
   ctx.textAlign="center";ctx.lineJoin="round";
   const txt=(t,y,size,maxW)=>{ctx.font=`800 ${size}px "Saira Condensed","Arial Narrow",sans-serif`;let sc=1;const m=ctx.measureText(t).width;if(maxW&&m>maxW)sc=maxW/m;
     ctx.save();ctx.translate(32,y);ctx.scale(sc,1);ctx.lineWidth=1.8;ctx.strokeStyle="#0d1f45";ctx.strokeText(t,0,0);ctx.fillStyle="#fff";ctx.fillText(t,0,0);ctx.restore()};
