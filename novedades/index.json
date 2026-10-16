@@ -1,1 +1,9 @@
-{"items":[]}
+{
+ "items": [
+  {
+   "id": "f26-formaciones-v2",
+   "titulo": "Fecha 26 · formaciones completas (CASI y Champagnat)",
+   "file": "f26-formaciones.json"
+  }
+ ]
+}
