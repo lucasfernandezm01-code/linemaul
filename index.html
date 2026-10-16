@@ -437,7 +437,7 @@ function renderXV(){
   let banner="";
   if(f.estado==="abierta")banner=`<span class="dot abierta"></span><span><b>${f.cierra?"Cierra en "+falta(f.cierra):"Equipos abiertos"}</b> · ${f.cierra?"Podés cambiar tu XV hasta el "+fmtDT(f.cierra)+" h. Una vez cerrada la fecha, no se permiten cambios.":"Podés cambiar tu XV hasta que se cierre la fecha. Una vez cerrada, no se permiten cambios."}</span>`;
   else if(f.estado==="proxima")banner=`<span class="dot proxima"></span><span><b>Abre el ${fmtDT(f.abre)} h</b> · Ahí vas a poder armar tu XV para esta fecha.</span>`;
-  else if(f.estado==="cerrada")banner=`<span class="dot cerrada"></span><span><b>Fecha cerrada</b> · Los equipos quedaron fijos. Esperando la carga de puntos.</span>`;
+  else if(f.estado==="cerrada")banner=`<span class="dot cerrada"></span><span><b>Fecha cerrada</b></span>`;
   else if(f.estado==="final")banner=`<span class="dot final"></span><span><b><span id="totPts" class="num" data-v="${teamFechaPts({fechas:{[f.id]:S.draft}},f.id)}">${teamFechaPts({fechas:{[f.id]:S.draft}},f.id)}</span> pts</b> · Puntos de ${esc(f.nombre)} publicados.</span>`;
   if(snapOf(f.id)&&f.estado!=="abierta")banner+=`</div><div class="banner small"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="flex:none"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Este es tu XV según el registro al cierre (${fmtDT(snapOf(f.id).at)} h). Es el que suma puntos. Si lo cambiaste después del horario, ese cambio vale recién para la fecha siguiente.</span>`;
   const rowHtml=ROWS.map((r,i)=>`<div class="prow${r.length===4?" four":""}">${r.map(s=>slotHtml(s,picks[s],st,hasStats)).join("")}</div>`).join("");
@@ -445,7 +445,7 @@ function renderXV(){
     <div class="chips" role="group" aria-label="Fecha">${fs.map(x=>`<button class="chip" data-fecha="${esc(x.id)}" aria-pressed="${x.id===f.id}"><span class="dot ${x.estado}"></span>${esc(x.nombre)}</button>`).join("")}</div>
     <div class="banner">${banner}</div>
     ${!S.uid?loginBanner("Creá tu cuenta gratis para guardar tu XV."):""}
-    ${(()=>{const n=alinClubs(f);if(!n||f.estado==="final")return "";const bad=Object.values(picks).filter(pid=>S.plantel[pid]).map(pid=>[pid,alinOf(f,pid)]).filter(([pid,a])=>a&&a!=="T");
+    ${(()=>{const n=alinClubs(f);if(!n||f.estado!=="abierta")return "";const bad=Object.values(picks).filter(pid=>S.plantel[pid]).map(pid=>[pid,alinOf(f,pid)]).filter(([pid,a])=>a&&a!=="T");
       return `<div class="banner small" style="flex-direction:column;align-items:flex-start;gap:8px"><span><b>Formaciones confirmadas</b> · ${n} de ${DIVS.length} clubes. ${bad.length?`Tenés <b style="font-family:var(--body);font-size:14px;text-transform:none;color:var(--accent)">${bad.length} jugador${bad.length>1?"es":""}</b> que no ${bad.length>1?"figuran como titulares":"figura como titular"}.`:"Los titulares tienen la marca verde."}</span><span class="allegend">${alinTag("T",true)}</span></div>`})()}
     ${S.copiedFrom&&editable?`<div class="banner small">Copiamos tu XV de ${esc(S.copiedFrom)}. Cambiá lo que quieras y guardalo.</div>`:""}
     <div class="row" style="align-items:flex-end"><label class="f" style="flex:1 1 200px">Nombre de tu equipo<input type="text" id="teamName" maxlength="40" placeholder="Ej: Los Pilares del Sábado" value="${esc(S.nameDraft!=null?S.nameDraft:(t&&t.nombre||""))}" ${S.uid?"":"disabled"}></label>
