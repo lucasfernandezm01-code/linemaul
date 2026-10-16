@@ -45,6 +45,8 @@ body.is-home{background-image:radial-gradient(ellipse at 0% 0%,rgba(124,26,14,.5
 #home .hlogo{width:min(74vw,320px);height:auto;aspect-ratio:1;filter:drop-shadow(0 14px 34px rgba(0,0,0,.6))}
 #home .hslogan{font:italic 700 18px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:-2px 0 6px}
 #home .inst{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:14px;padding:10px 12px;border-radius:12px;border:1px solid rgba(246,239,230,.14);background:rgba(0,0,0,.18);font-size:13px;line-height:1.35;color:rgba(246,239,230,.8)}#home .inst span{flex:1}#home .instx{appearance:none;background:none;border:0;color:inherit;font-size:22px;line-height:1;cursor:pointer;opacity:.6;padding:0 4px}
+.nrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);cursor:pointer}.nrow span{display:flex;flex-direction:column}.nrow small{color:var(--muted);font-size:12px}.nrow input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+#home .nhome{border-color:rgba(242,194,26,.45);background:rgba(242,194,26,.08)}
 #home .hpick{font:600 13px var(--body);letter-spacing:.08em;text-transform:uppercase;color:rgba(246,239,230,.6);margin-top:4px}
 #home .hgames{display:flex;flex-direction:column;gap:12px;width:100%}
 .hgame{appearance:none;display:flex;gap:14px;align-items:center;text-align:left;width:100%;padding:14px 14px 14px 12px;border-radius:16px;border:1px solid;cursor:pointer;color:#f6efe6;font-family:var(--body);box-shadow:0 10px 26px rgba(0,0,0,.35);transition:transform .15s}
@@ -401,7 +403,7 @@ function horarios(sab){const [y,mo,da]=sab.split("-").map(Number);const pad=n=>S
   return {abre:`${lun.getUTCFullYear()}-${pad(lun.getUTCMonth()+1)}-${pad(lun.getUTCDate())}T08:00:00-03:00`,cierra:`${y}-${pad(mo)}-${pad(da)}T15:25:00-03:00`}}
 
 const S={db:null,user:null,uid:null,isOwner:false,ready:false,
-  home:true,plantel:{},fechas:[],pts:Object.assign({},DEF_PTS),equipos:{},kits:{},coaches:{},prode:{},prDraft:{},game:(()=>{try{return localStorage.getItem("gdt-game")==="prode"?"prode":"dt"}catch(e){return "dt"}})(),
+  home:!/[?&]go=(dt|prode)/.test(location.search),plantel:{},fechas:[],pts:Object.assign({},DEF_PTS),equipos:{},kits:{},coaches:{},prode:{},prDraft:{},game:(()=>{const g=(location.search.match(/[?&]go=(dt|prode)/)||[])[1];if(g)return g;try{return localStorage.getItem("gdt-game")==="prode"?"prode":"dt"}catch(e){return "dt"}})(),
   tab:"xv",ligas:{},liga:null,adminTab:"metricas",fechaSel:null,tablaSel:"general",open:null,
   draft:null,draftKey:null,dirty:false,copiedFrom:null,
   statsFecha:null,statsDiv:"Alumni",statsDraft:null,statsDirty:false,saving:false};
@@ -474,7 +476,7 @@ const LM_LOGO="data:image/webp;base64,UklGRjbfAABXRUJQVlA4WAoAAAAQAAAA/wEA/wEAQU
 const HOME_SLOGAN="El juego del rugby argentino";
 function renderHome(){const h=$("#home");if(!h)return;
   h.innerHTML=`<img class="hlogo" src="${LM_LOGO}" alt="Line & Maul"><div class="hslogan">${esc(HOME_SLOGAN)}</div><div class="hpick">Elegí tu juego</div>
-  <div class="hgames">${["dt","prode"].map(k=>{const g=GAME_TXT[k];return `<button class="hgame ${k}" data-hgame="${k}"><img src="${LOGOS[k]}" alt=""><span class="hb"><span class="eyebrow">${esc(g.eye)}</span><span class="ht">${g.t}</span><small>${esc(g.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`}).join("")}</div>${installHtml()}`}
+  <div class="hgames">${["dt","prode"].map(k=>{const g=GAME_TXT[k];return `<button class="hgame ${k}" data-hgame="${k}"><img src="${LOGOS[k]}" alt=""><span class="hb"><span class="eyebrow">${esc(g.eye)}</span><span class="ht">${g.t}</span><small>${esc(g.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`}).join("")}</div>${notifHomeHtml()}${installHtml()}`}
 /* app instalable: botón en Android/Chrome, instrucciones en iPhone */
 let _bip=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();_bip=e;if(S.home)render()});
 window.addEventListener("appinstalled",()=>{_bip=null;try{localStorage.setItem("lm-inst","1")}catch(e){}if(S.home)render()});
@@ -486,6 +488,49 @@ function installHtml(){if(isStandalone())return "";
 document.addEventListener("click",async e=>{if(e.target.closest("#instGo")&&_bip){_bip.prompt();try{await _bip.userChoice}catch(err){}_bip=null;render();return}
   if(e.target.closest("#instX")){try{localStorage.setItem("lm-inst-x","1")}catch(err){}render()}});
 if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/* ---------- notificaciones push ---------- */
+const VAPID_PUBLIC="BAY0kOg2olgVmmQ7FJ0Rtxsm-U_TtaXTIPsLmZ7WaZf0kEK7DsA7uojC0GzvlnSkYZgNn3XNCx3tzfn3dslGGRs";
+const NOTIF_TIPOS=[["abre","Abrió la fecha","Lunes, cuando abre la fecha"],["form","Formaciones confirmadas","Viernes a la noche"],["cierre","Cierra en 2 h","Sábado, solo si te falta el XV o el Prode"],["puntos","Puntos publicados","Cuando se publican los puntos"],["avisos","Novedades de Line & Maul","Avisos especiales, premios y sponsors"]];
+const pushOK=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const N={sub:null,prefs:{},loaded:false};
+function b64u(s){const p="=".repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))}
+async function notifLoad(){if(!pushOK()||!S.uid)return;try{const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();N.sub=sub;
+  if(sub){const {data}=await sb.from("push_subs").select("prefs").eq("endpoint",sub.endpoint).maybeSingle();N.prefs=(data&&data.prefs)||{}}}catch(e){}N.loaded=true}
+async function notifOn(){if(!S.uid){toast("Ingresá a tu cuenta para activar las notificaciones");return false}
+  if(!pushOK()){toast(isIOS()?"En iPhone primero instalá la app (Compartir → Agregar a inicio) y abrila desde el ícono.":"Este navegador no permite notificaciones.");return false}
+  try{const perm=await Notification.requestPermission();if(perm!=="granted"){toast("No diste permiso. Lo podés cambiar en la configuración del celular.");return false}
+    const reg=await navigator.serviceWorker.register("sw.js");await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
+    const r=await sb.from("push_subs").upsert({endpoint:sub.endpoint,user_id:S.uid,sub:sub.toJSON(),prefs:N.prefs||{},updated_at:new Date().toISOString()},{onConflict:"endpoint"});if(r.error)throw r.error;
+    N.sub=sub;toast("Notificaciones activadas 🔔");return true}catch(e){console.error(e);toast("No se pudieron activar. Probá de nuevo.");return false}}
+async function notifOff(){try{if(N.sub){await sb.from("push_subs").delete().eq("endpoint",N.sub.endpoint);await N.sub.unsubscribe()}}catch(e){}N.sub=null;toast("Notificaciones desactivadas")}
+async function notifPref(k,v){N.prefs=Object.assign({},N.prefs,{[k]:v});if(N.sub)await sb.from("push_subs").update({prefs:N.prefs,updated_at:new Date().toISOString()}).eq("endpoint",N.sub.endpoint)}
+async function openNotif(){await notifLoad();drawNotif()}
+function drawNotif(){const el=$("#sheet");el.hidden=false;sheetRole="notif";const on=!!N.sub;
+  const iosNo=isIOS()&&!isStandalone();
+  const body=!pushOK()||iosNo?`<p style="margin:0;line-height:1.5">${iosNo?"En iPhone las notificaciones funcionan con la app instalada: tocá <b>Compartir</b> y después <b>Agregar a inicio</b>. Después abrí Line &amp; Maul desde el ícono y activalas acá.":"Este navegador no permite notificaciones. Probá con Chrome o instalando la app."}</p>`
+    :`<div class="row" style="justify-content:space-between;align-items:center"><span><b>${on?"Activadas":"Desactivadas"}</b><br><small class="muted">En este celular</small></span><button class="btn ${on?"":"primary"}" id="nToggle">${on?"Desactivar":"Activar"}</button></div>
+     ${on?`<div style="display:flex;flex-direction:column;gap:2px;margin-top:6px">${NOTIF_TIPOS.map(([k,n,d])=>`<label class="nrow"><span><b>${n}</b><small>${d}</small></span><input type="checkbox" data-npref="${k}" ${N.prefs[k]===false?"":"checked"}></label>`).join("")}</div>`:`<p class="small muted" style="margin:0">Te avisamos cuando abre la fecha, cuando salen las formaciones, antes del cierre si te falta algo y cuando se publican los puntos.</p>`}`;
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Notificaciones"><div class="hd"><div class="row" style="justify-content:space-between"><h2>Notificaciones</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:16px;display:flex;flex-direction:column;gap:12px">${body}</div></div></div>`}
+document.addEventListener("click",async e=>{if(e.target.id==="nToggle"){e.target.disabled=true;if(N.sub)await notifOff();else await notifOn();drawNotif();if(S.home)render();return}
+  if(e.target.id==="nHome"){e.target.disabled=true;await notifOn();render();return}});
+document.addEventListener("change",e=>{const k=e.target.dataset&&e.target.dataset.npref;if(k)notifPref(k,e.target.checked)});
+function notifHomeHtml(){if(!S.uid||!pushOK()||!N.loaded||N.sub)return "";if(isIOS()&&!isStandalone())return "";
+  try{if(Notification.permission==="denied")return ""}catch(e){}
+  return `<div class="inst nhome"><span><b>🔔 Activá las notificaciones</b><br>Te avisamos cuando abre la fecha y antes del cierre.</span><button class="btn sm primary" id="nHome">Activar</button></div>`}
+/* admin: avisos manuales */
+function adminAvisos(){return `<div class="card"><h3>Mandar un aviso</h3><p class="small muted" style="margin:0">Llega a todos los que tienen las notificaciones activadas (y no apagaron "Novedades"). Se envía en los próximos 15 minutos.</p>
+  <label class="f">Título<input type="text" id="avT" maxlength="60" placeholder="Ej: ¡Nuevo premio!"></label>
+  <label class="f">Mensaje<textarea id="avB" rows="3" maxlength="180" placeholder="Ej: El que gane la fecha se lleva una camiseta oficial."></textarea></label>
+  <label class="f">Al tocarlo abre<select id="avU"><option value="">Inicio</option><option value="?go=dt">Fantasy</option><option value="?go=prode">Prode</option></select></label>
+  <div class="row"><button class="btn primary" id="avGo">Enviar aviso</button></div></div>
+  <div class="card"><h3>Suscriptos y últimos avisos</h3><div id="avList" class="small muted">Cargando…</div></div>`}
+async function loadAvisos(){const el=$("#avList");if(!el)return;try{const {count}=await sb.from("push_subs").select("endpoint",{count:"exact",head:true});
+  const {data}=await sb.from("push_queue").select("*").order("id",{ascending:false}).limit(10);
+  el.innerHTML=`<p style="margin:0 0 8px"><b class="num" style="font-size:22px;color:var(--accent)">${count||0}</b> celulares con notificaciones activadas.</p>`+((data||[]).map(q=>`<div class="pdrow"><div><b>${esc(q.title)}</b><div class="small muted">${esc(q.body)}</div></div><span class="small">${q.sent_at?`Enviado${q.sent_count!=null?" · "+q.sent_count:""}`:"Pendiente"}</span></div>`).join("")||"<p class='muted'>Todavía no mandaste avisos.</p>")}catch(err){el.textContent="No se pudo cargar. ¿Corriste el SQL de notificaciones?"}}
+document.addEventListener("click",async e=>{if(e.target.id!=="avGo")return;const t=($("#avT").value||"").trim(),b=($("#avB").value||"").trim(),u=$("#avU").value;
+  if(!t||!b){toast("Completá título y mensaje");return}e.target.disabled=true;const r=await sb.from("push_queue").insert({title:t,body:b,url:u||null});e.target.disabled=false;
+  if(r.error){toast("No se pudo guardar el aviso");return}$("#avT").value="";$("#avB").value="";toast("Aviso en cola: sale en los próximos 15 minutos");loadAvisos()});
 function goHome(){if((S.dirty||S.prDirty)&&!confirmLeave())return;S.home=true;window.scrollTo(0,0);render()}
 $("#home").addEventListener("click",e=>{const b=e.target.closest("[data-hgame]");if(!b)return;const k=b.dataset.hgame;if(k!==S.game){S.game=k;try{localStorage.setItem("gdt-game",k)}catch(err){}S.tab=k==="prode"?"pxv":"xv";S.liga=null}S.home=false;window.scrollTo(0,0);render()});
 $("#homeBtn").addEventListener("click",goHome);$("#gLogo").addEventListener("click",goHome);
@@ -1200,9 +1245,9 @@ document.addEventListener("click",async e=>{if(e.target.id!=="mCopy")return;cons
   try{await navigator.clipboard.writeText(txt);toast("Resumen copiado")}catch(err){toast("No se pudo copiar")}});
 function renderAdmin(){
   if(!S.isOwner){$("#view").innerHTML="";return}
-  const at=S.adminTab||"metricas";const sub=[["metricas","Métricas"],["plantel","Plantel"],["fechas","Fechas"],["alin","Formaciones"],["puntos","Cargar puntos"],["camis","Clubes"],["valores","Puntaje"],["importar","Importar"]];
+  const at=S.adminTab||"metricas";const sub=[["metricas","Métricas"],["avisos","Notificaciones"],["plantel","Plantel"],["fechas","Fechas"],["alin","Formaciones"],["puntos","Cargar puntos"],["camis","Clubes"],["valores","Puntaje"],["importar","Importar"]];
   let html=`<section class="view"><div class="chips" role="group" aria-label="Admin">${sub.map(([k,n])=>`<button class="chip" data-atab="${k}" aria-pressed="${at===k}">${n}</button>`).join("")}</div>`;
-  if(at==="metricas")html+=adminMetricas();else if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
+  if(at==="metricas")html+=adminMetricas();else if(at==="avisos"){html+=adminAvisos();setTimeout(loadAvisos,0)}else if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
   $("#view").innerHTML=html+"</section>";
 }
 function adminPlantel(){
@@ -1642,7 +1687,7 @@ async function applySession(session){const u=session&&session.user?session.user:
       if(!p){const nombre=((u.user_metadata&&u.user_metadata.nombre)||(u.email||"").split("@")[0]).slice(0,40);await sb.from("profiles").insert({id:uid,nombre});p={id:uid,nombre}}
       S.me={email:u.email,nombre:p.nombre||""}}catch(e){S.me={email:u.email,nombre:""}}
     try{const {data}=await sb.rpc("is_admin");S.isOwner=!!data}catch(e){}}
-  renderAuthBtn();if(S.db)await S.db.refreshAll();render()}
+  renderAuthBtn();if(S.db)await S.db.refreshAll();N.loaded=false;N.sub=null;N.prefs={};render();if(uid)notifLoad().then(()=>{if(S.home)render()})}
 function renderAuthBtn(){const b=$("#authBtn");if(!b)return;b.hidden=!sb;b.textContent=S.uid?((S.me&&S.me.nombre)||"Mi cuenta").split(" ")[0]:"Ingresar";b.setAttribute("aria-label",S.uid?"Mi cuenta":"Ingresar o crear cuenta")}
 function openAuth(mode){const el=$("#sheet");el.hidden=false;sheetRole="auth";S.authMode=mode||(S.uid?"cuenta":"in");drawAuth()}
 function drawAuth(){const m=S.authMode;const el=$("#sheet");
@@ -1653,7 +1698,7 @@ function drawAuth(){const m=S.authMode;const el=$("#sheet");
   if(m==="olvide")body=`<label class="f">Mail<input type="email" id="auEmail" autocomplete="email"></label><button class="btn primary" id="auGo">Mandarme el link</button><button class="btn sm" data-amode="in">Volver</button>`;
   if(m==="nueva")body=`<label class="f">Nueva contraseña (mínimo 6)<input type="password" id="auPass" autocomplete="new-password"></label><button class="btn primary" id="auGo">Guardar contraseña</button>`;
   if(m==="mail")body=`<p style="margin:0">${esc(S.authMsg||"")}</p><button class="btn primary" id="closeSheet">Listo</button>`;
-  if(m==="cuenta")body=`<div class="small muted">${esc(S.me&&S.me.email||"")}</div><label class="f">Tu nombre (así aparecés en las tablas)<input type="text" id="auNombre" maxlength="40" value="${esc(S.me&&S.me.nombre||"")}"></label><button class="btn primary" id="auSaveName">Guardar nombre</button><button class="btn" data-amode="nueva">Cambiar contraseña</button><button class="btn" id="auOut">Cerrar sesión</button>`;
+  if(m==="cuenta")body=`<div class="small muted">${esc(S.me&&S.me.email||"")}</div><label class="f">Tu nombre (así aparecés en las tablas)<input type="text" id="auNombre" maxlength="40" value="${esc(S.me&&S.me.nombre||"")}"></label><button class="btn primary" id="auSaveName">Guardar nombre</button><button class="btn" id="auNotif">🔔 Notificaciones</button><button class="btn" data-amode="nueva">Cambiar contraseña</button><button class="btn" id="auOut">Cerrar sesión</button>`;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${tit}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${tit}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div>${m==="in"||m==="up"?`<div class="small muted">Con tu cuenta jugás el Fantasy y el Prode de Line &amp; Maul.</div>`:""}</div><div class="list" style="padding:16px;display:flex;flex-direction:column;gap:12px">${body}</div></div></div>`;
   const f=el.querySelector("input");if(f)setTimeout(()=>f.focus(),50)}
 const authErr=e=>{const s=String(e&&e.message||"");if(/invalid login/i.test(s))return "Mail o contraseña incorrectos.";if(/already registered|already exists/i.test(s))return "Ese mail ya tiene cuenta. Ingresá o recuperá la contraseña.";if(/password/i.test(s)&&/6/.test(s))return "La contraseña tiene que tener al menos 6 caracteres.";if(/email/i.test(s)&&/invalid/i.test(s))return "Revisá el mail.";if(/rate|too many/i.test(s))return "Demasiados intentos. Esperá unos minutos.";if(/not confirmed/i.test(s))return "Todavía no confirmaste tu mail. Revisá tu casilla.";return "No se pudo. Probá de nuevo."};
@@ -1670,6 +1715,7 @@ $("#sheet").addEventListener("click",async e=>{if(sheetRole!=="auth")return;
       else if(S.authMode==="nueva"){if(pw.length<6){toast("Mínimo 6 caracteres");b.disabled=false;return}const r=await sb.auth.updateUser({password:pw});if(r.error)throw r.error;closeSheet();toast("Contraseña cambiada")}
     }catch(err){toast(authErr(err));b.disabled=false}return}
   if(e.target.id==="auSaveName"){const n=(($("#auNombre")||{}).value||"").trim().slice(0,40);if(!n){toast("Poné tu nombre");return}const r=await sb.from("profiles").update({nombre:n}).eq("id",S.uid);if(r.error){toast("No se pudo guardar");return}S.me.nombre=n;renderAuthBtn();closeSheet();toast("Nombre guardado");render();return}
+  if(e.target.id==="auNotif"){openNotif();return}
   if(e.target.id==="auOut"){await sb.auth.signOut();closeSheet();toast("Sesión cerrada");return}
 });
 $("#sheet").addEventListener("keydown",e=>{if(sheetRole==="auth"&&e.key==="Enter"&&e.target.tagName==="INPUT"){const g=$("#auGo")||$("#auSaveName");if(g)g.click()}});

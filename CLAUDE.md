@@ -9,3 +9,4 @@ Fantasy ("Mi XV") y Prode de rugby argentino. Dueño: Lucas (habla en español r
   `{"fechas": {"<id>": {campos que se mezclan en la fecha}}, "config": {"<key>": {campos}}, "borrar_fechas": ["<id>"], "reemplazar_config": false}`
 - `datos/inicial.json`: planteles, camisetas y entrenadores 2026 (botón "Cargar datos iniciales").
 - Probar sin red: servir la carpeta y reemplazar el script de supabase-js por un mock en memoria.
+- Notificaciones push: `scripts/push.mjs` corre cada 15 min (`.github/workflows/push.yml`) con los secretos `VAPID_PRIVATE` y `PUSH_TOKEN` del repo. Tablas y funciones en `supabase/04_notificaciones.sql`. Avisos manuales: Admin → Notificaciones.
