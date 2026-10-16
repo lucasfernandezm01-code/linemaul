@@ -370,7 +370,9 @@ const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""
 function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>el.hidden=true,2400)}
 /* fechas soloProde (ej. solo Primera A) no aparecen en el Fantasy */
 function sortedFechas(){return S.fechas.filter(f=>!(f.soloProde&&S.game!=="prode")).sort((a,b)=>(a.orden||0)-(b.orden||0))}
-function surname(n){const p=String(n).trim().split(/\s+/);return p.length>1?p.slice(1).join(" "):p[0]}
+/* apellido para la camiseta: si el admin cargó uno (p.c) se usa ese; si no, se sacan los nombres de pila del principio */
+const NOMBRES=new Set("juan bautista cruz pablo manuel martin martín jose josé maria maría ignacio tomas tomás santiago francisco felipe pedro agustin agustín nicolas nicolás joaquin joaquín lucas mateo benjamin benjamín facundo gonzalo federico ramon ramón luis carlos miguel jeronimo jerónimo ezequiel lautaro valentin valentín thiago tiago bruno franco marcos matias matías patricio rodrigo diego sebastian sebastián andres andrés alejandro emiliano esteban gaston gastón german germán guido hernan hernán ivan iván julian julián leandro lorenzo marcelo mariano maximo máximo octavio rafael ricardo salvador simon simón tobias tobías vicente segundo cristobal cristóbal eliseo eugenio filippo rocco santos dante enzo gino hugo leo leon león".split(" "));
+function surname(n){if(n&&typeof n==="object")return (n.c&&String(n.c).trim())||surname(n.n||"");const w=String(n||"").trim().split(/\s+/);if(w.length<2)return w[0]||"";let i=1;while(i<w.length-1&&NOMBRES.has(w[i].toLowerCase()))i++;return w.slice(i).join(" ")}
 
 /* ---------- puntos ---------- */
 function playerPts(st){if(!st)return 0;let s=0;for(const [k] of STATS)s+=(+st[k]||0)*(+S.pts[k]||0);return s}
@@ -519,7 +521,7 @@ function clearRoles(pid){ROLES.forEach(r=>{if(S.draft[r.k]===pid)S.draft[r.k]=nu
 function rolesHtml(editable){
   const n=Object.values(S.draft.picks).filter(Boolean).length;
   return `<div class="roles"><h3>Roles del XV</h3>${ROLES.map(r=>{const p=S.plantel[S.draft[r.k]];
-    return `<button class="role${p?" set":""}" data-role="${r.k}" ${editable||p?"":"disabled"}><span class="rb big ${r.k}">${r.b}</span><span class="rt"><b>${r.n}</b><span class="small muted">${r.d}</span></span><span class="rv">${p?esc(surname(p.n)):(editable?(n?"Elegir":"Armá el XV"):"—")}</span></button>`}).join("")}
+    return `<button class="role${p?" set":""}" data-role="${r.k}" ${editable||p?"":"disabled"}><span class="rb big ${r.k}">${r.b}</span><span class="rt"><b>${r.n}</b><span class="small muted">${r.d}</span></span><span class="rv">${p?esc(surname(p)):(editable?(n?"Elegir":"Armá el XV"):"—")}</span></button>`}).join("")}
     <button class="role${S.draft.hc?" set":""}" data-role="hc" ${editable||S.draft.hc?"":"disabled"}><span class="rb big hc">HC</span><span class="rt"><b>Head Coach</b><span class="small muted">Elegís un entrenador. Si su club gana, +3. Si pierde, −3.</span></span><span class="rv">${S.draft.hc?(coachOf(S.draft.hc)?`<span class="hcv">${esc(coachOf(S.draft.hc))}<span class="small muted">${esc(S.draft.hc)}</span></span>`:esc(S.draft.hc)):(editable?"Elegir":"—")}</span></button></div>`;
 }
 /* camiseta (espalda) con los colores del club del jugador: apellido y número */
@@ -555,7 +557,7 @@ function slotHtml(s,pid,st,hasStats){
   let pt="";if(hasStats){const v=rolePts(S.draft,pid,st[pid]);pt=`<span class="pt num" data-v="${v}">${v}</span>`}
   const bd=ROLES.filter(r=>S.draft[r.k]===pid).map(r=>`<span class="rb ${r.k}" title="${r.n}">${r.b}</span>`).join("");
   const drop=S.justPicked===s?" drop":"";
-  return `<button class="slot${drop}" data-slot="${s}" aria-label="${esc(SLOT_NAME[s]+": "+p.n)}">${pt}${bd?`<span class="badges">${bd}</span>`:""}${jersey(s,surname(p.n),false,fdiv(pid))}${matchPlate(S.fechas.find(x=>x.id===S.fechaSel),pid)}</button>`;
+  return `<button class="slot${drop}" data-slot="${s}" aria-label="${esc(SLOT_NAME[s]+": "+p.n)}">${pt}${bd?`<span class="badges">${bd}</span>`:""}${jersey(s,surname(p),false,fdiv(pid))}${matchPlate(S.fechas.find(x=>x.id===S.fechaSel),pid)}</button>`;
 }
 
 $("#view").addEventListener("click",e=>{
@@ -747,10 +749,10 @@ async function buildCard(){
   const picks=S.draft.picks;const rowsY=[py+22,py+120,py+218,py+316,py+414,py+512,py+604];const jw=112;
   ROWS.forEach((r,ri)=>{const gap=r.length===4?210:r.length===3?220:200;const x0=W/2-(r.length-1)*gap/2;
     r.forEach((slot,i)=>{const pid=picks[slot];const p=S.plantel[pid];const roles=[];if(p&&S.draft.kick===pid)roles.push("P");if(p&&S.draft.cap===pid)roles.push("C");
-      drawJersey(ctx,x0+i*gap,rowsY[ri],jw,slot,p?surname(p.n):"",roles,p?fdiv(pid):null)})});
+      drawJersey(ctx,x0+i*gap,rowsY[ri],jw,slot,p?surname(p):"",roles,p?fdiv(pid):null)})});
   // pie
   const capP=S.plantel[S.draft.cap],kickP=S.plantel[S.draft.kick];
-  const items=[["C",capP?surname(capP.n):"—","#f2c21a"],["P",kickP?surname(kickP.n):"—","#7cc4ff"],["HC",S.draft.hc?hcLabel(S.draft.hc):"—","#c9a8ff"]];
+  const items=[["C",capP?surname(capP):"—","#f2c21a"],["P",kickP?surname(kickP):"—","#7cc4ff"],["HC",S.draft.hc?hcLabel(S.draft.hc):"—","#c9a8ff"]];
   ctx.font='700 30px "Barlow",sans-serif';const parts=items.map(([b,n])=>({b,n,w:ctx.measureText(n).width+62}));const tot=parts.reduce((a,x)=>a+x.w,0)+40*(parts.length-1);
   let x=W/2-tot/2;const fy=1222;
   parts.forEach((pt,i)=>{const col=items[i][2];ctx.beginPath();ctx.arc(x+20,fy,20,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.fillStyle="#0d1f45";ctx.textAlign="center";ctx.font=`800 ${pt.b.length>1?18:22}px "Saira Condensed",sans-serif`;ctx.fillText(pt.b,x+20,fy+7);
@@ -812,7 +814,7 @@ function renderSheet(){
   /* cambios con el banco (o con el XV, si es un suplente): no cuentan */
   /* mover jugadores propios a este puesto (XV o banco): ilimitado, no cuenta como cambio */
   const swaps=!editable?[]:[...ROWS.flat(),...BENCH].filter(o=>o!==slot&&S.plantel[S.draft.picks[o]]&&fitsSlot(S.draft.picks[o],slot)).map(o=>Object.assign({o,po:S.draft.picks[o]},movePlan(slot,o)));
-  const curN=cur&&S.plantel[cur]?esc(surname(S.plantel[cur].n)):"";
+  const curN=cur&&S.plantel[cur]?esc(surname(S.plantel[cur])):"";
   const swapHtml=swaps.length?`<div class="swaps"><div class="small muted" style="padding:2px 4px 6px">Tus jugadores que pueden jugar acá · no cuenta como cambio</div>${swaps.map(x=>{const p=S.plantel[x.po];
     const note=x.mode==="block"?(x.b?`Para moverlo, primero liberá el #${x.b} o quitá a ${curN}`:`Para moverlo, primero quitá a ${curN}`):x.mode==="bench"?`${curN} baja al banco (#${x.b})`:x.mode==="swap"?`${curN} pasa al #${x.o}`:"";
     return `<button class="pick" data-swap="${x.o}" ${x.mode==="block"?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>#${x.o} ${esc(p.n)}${isXV(x.o)?"":` <span class="muted small">(suplente)</span>`}</span>${note?`<span class="why">${note}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(fdiv(x.po)))}</span><span class="tag" style="background:var(--accent);color:var(--accent-fg)">⇅ ${x.mode==="swap"?"Cambiar":"Mover acá"}</span></span></button>`}).join("")}</div>`:"";
@@ -833,7 +835,7 @@ function renderSheet(){
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Elegir ${SLOT_NAME[slot]}">
     <div class="hd">
       <div class="row" style="justify-content:space-between"><h2>#${slot} · ${SLOT_NAME[slot]}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div>
-      ${curP&&editable?`<div class="row"><button class="btn sm danger" id="removeP">Quitar a ${esc(surname(curP.n))}</button></div>`:""}
+      ${curP&&editable?`<div class="row"><button class="btn sm danger" id="removeP">Quitar a ${esc(surname(curP))}</button></div>`:""}
       ${!editable?`<div class="small muted">Esta fecha no está abierta: solo podés mirar.</div>`:""}
       ${ci?`<div class="small muted">Cambios de plantel: <b class="num">${ci.used}/${ci.max}</b>${sinCambios?" · solo podés elegir jugadores que ya tenías":""}</div>`:""}
       <input type="text" id="pq" placeholder="Buscar ${slotLbl(slot).toLowerCase()} por nombre o club" value="${esc(sheetQ)}" autocomplete="off">
@@ -856,8 +858,10 @@ $("#sheet").addEventListener("click",async e=>{if(e.target.id!=="doRename")retur
   const n=(($("#newName")||{}).value||"").trim().slice(0,40);if(!n){toast("Poné un nombre");return}if(n===(t.nombre||"").trim()){closeSheet();return}
   e.target.disabled=true;try{await S.db.doc("equipos/"+S.uid).set({nombre:n,fechas:t.fechas||{},ligas:Array.isArray(t.ligas)?t.ligas:[],club:t.club||"",nombreCambios:(+t.nombreCambios||0)+1});closeSheet();toast("Nombre cambiado. Ya queda fijo.")}catch(err){e.target.disabled=false;toast("No se pudo cambiar. Probá de nuevo.")}});
 $("#sheet").addEventListener("click",async e=>{if(e.target.id!=="doRenP")return;const pid=e.target.dataset.pid;if(!S.plantel[pid])return;
-  const n=(($("#renPName")||{}).value||"").trim().replace(/\s+/g," ").slice(0,60);if(!n){toast("Poné un nombre");return}if(n===S.plantel[pid].n){closeSheet();return}
-  e.target.disabled=true;const np=JSON.parse(JSON.stringify(S.plantel));np[pid].n=n;try{await S.db.doc("config/plantel").set({players:np});closeSheet();toast("Nombre cambiado: "+n)}catch(err){e.target.disabled=false;toast("No se pudo guardar. Probá de nuevo.")}});
+  const n=(($("#renPName")||{}).value||"").trim().replace(/\s+/g," ").slice(0,60);if(!n){toast("Poné un nombre");return}
+  let c=(($("#renPShirt")||{}).value||"").trim().replace(/\s+/g," ").slice(0,24);if(c&&c.toLowerCase()===surname(n).toLowerCase())c="";
+  const old=S.plantel[pid];if(n===old.n&&c===(old.c||"")){closeSheet();return}
+  e.target.disabled=true;const np=JSON.parse(JSON.stringify(S.plantel));np[pid].n=n;if(c)np[pid].c=c;else delete np[pid].c;try{await S.db.doc("config/plantel").set({players:np});closeSheet();toast("Guardado: "+n+(c?" · camiseta "+c:""))}catch(err){e.target.disabled=false;toast("No se pudo guardar. Probá de nuevo.")}});
 $("#sheet").addEventListener("input",e=>{if(e.target.id==="pq"){sheetQ=e.target.value;const pos=e.target.selectionStart;renderSheet();const i=$("#pq");i.focus();i.setSelectionRange(pos,pos)}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(sheetSlot!=null||sheetRole!=null))closeSheet()});
 
@@ -960,7 +964,7 @@ function detailHtml(t,fid,uid){
   if(f&&f.estado==="abierta"&&t!==myTeam())return `<div class="small muted" style="display:flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Este XV se ve cuando cierre ${esc(f.nombre)}. Así nadie copia.</div>`;
   return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">${Array.from({length:15},(_,i)=>i+1).map(s=>{const pid=e.picks[s];const p=S.plantel[pid];if(!p)return `<div class="small muted">#${s} —</div>`;
     const bd=ROLES.filter(r=>e[r.k]===pid).map(r=>`<span class="rb ${r.k}">${r.b}</span>`).join(" ");
-    return `<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid]):"–"}</b></div>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);return b.length?`<div class="small muted" style="margin-top:6px">Suplentes: ${b.map(p=>esc(surname(p.n))).join(", ")}</div>`:""})()}`;
+    return `<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid]):"–"}</b></div>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);return b.length?`<div class="small muted" style="margin-top:6px">Suplentes: ${b.map(p=>esc(surname(p))).join(", ")}</div>`:""})()}`;
 }
 $("#view").addEventListener("click",e=>{
   const lg=e.target.closest("[data-liga]");if(lg){S.liga=lg.dataset.liga||null;S.open=null;render();return}
@@ -1070,7 +1074,7 @@ function adminPlantel(){
     <div class="row"><button class="btn primary" id="addBulk">Agregar al plantel</button><span class="small muted" id="bulkMsg"></span></div></div>
     <div class="row" style="justify-content:space-between"><h3>Plantel · ${Object.keys(S.plantel).length} jugadores</h3></div>
     ${DIVS.map(d=>{const l=(by[d]||[]).sort((a,b)=>GROUPS[a[1].g].s[0]-GROUPS[b[1].g].s[0]||a[1].n.localeCompare(b[1].n));return `<details class="card" data-club-det="${esc(d)}" ${S.openDet&&S.openDet[d]?"open":""}><summary style="cursor:pointer;font-weight:600">${d} <span class="muted">· ${l.length}</span></summary>
-      ${l.length?`<div class="tbl-wrap"><table><tbody>${l.map(([id,p])=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${esc(p.n)}<button class="btn sm" data-renp="${esc(id)}" aria-label="Cambiar nombre de ${esc(p.n)}" title="Cambiar nombre" style="padding:2px 8px">✎</button></span></td><td><div class="row" style="gap:4px">${posList(p).map(x=>`<span class="tag">${GROUPS[x].n}${posList(p).length>1?` <button class="xpos" data-delpos="${esc(id)}" data-g="${x}" aria-label="Quitar ${GROUPS[x].n}">×</button>`:""}</span>`).join("")}<select id="ap-${esc(id)}" data-addpos="${esc(id)}" aria-label="Agregar puesto a ${esc(p.n)}" style="width:auto;padding:3px 6px;font-size:13px"><option value="">+ puesto</option>${Object.keys(GROUPS).filter(x=>!posList(p).includes(x)).map(x=>`<option value="${x}">${GROUPS[x].n}</option>`).join("")}</select></div></td><td><select id="pd-${esc(id)}" data-pdiv="${esc(id)}" aria-label="Club de ${esc(p.n)}" style="min-width:110px;padding:6px 8px;font-size:14px">${DIVS.map(dd=>`<option ${dd===p.d?"selected":""}>${dd}</option>`).join("")}</select></td><td class="r"><button class="btn sm danger" data-delp="${esc(id)}" aria-label="Borrar a ${esc(p.n)}">Borrar</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="small muted" style="margin:0">Sin jugadores.</p>`}</details>`}).join("")}`;
+      ${l.length?`<div class="tbl-wrap"><table><tbody>${l.map(([id,p])=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${esc(p.n)}<button class="btn sm" data-renp="${esc(id)}" aria-label="Cambiar nombre de ${esc(p.n)}" title="Editar nombre y camiseta" style="padding:2px 8px">✎</button></span></td><td><div class="row" style="gap:4px">${posList(p).map(x=>`<span class="tag">${GROUPS[x].n}${posList(p).length>1?` <button class="xpos" data-delpos="${esc(id)}" data-g="${x}" aria-label="Quitar ${GROUPS[x].n}">×</button>`:""}</span>`).join("")}<select id="ap-${esc(id)}" data-addpos="${esc(id)}" aria-label="Agregar puesto a ${esc(p.n)}" style="width:auto;padding:3px 6px;font-size:13px"><option value="">+ puesto</option>${Object.keys(GROUPS).filter(x=>!posList(p).includes(x)).map(x=>`<option value="${x}">${GROUPS[x].n}</option>`).join("")}</select></div></td><td><select id="pd-${esc(id)}" data-pdiv="${esc(id)}" aria-label="Club de ${esc(p.n)}" style="min-width:110px;padding:6px 8px;font-size:14px">${DIVS.map(dd=>`<option ${dd===p.d?"selected":""}>${dd}</option>`).join("")}</select></td><td class="r"><button class="btn sm danger" data-delp="${esc(id)}" aria-label="Borrar a ${esc(p.n)}">Borrar</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="small muted" style="margin:0">Sin jugadores.</p>`}</details>`}).join("")}`;
 }
 function adminFechas(){
   const fs=sortedFechas().reverse();
@@ -1132,7 +1136,7 @@ $("#view").addEventListener("click",async e=>{
     $("#bulk").value="";toast(`${Object.keys(add).length} jugadores cargados`+(errs.length?` · revisá líneas ${errs.join(", ")}`:""));return}
   const xp=e.target.closest("[data-delpos]");if(xp){const pid=xp.dataset.delpos;const g=xp.dataset.g;if(!S.plantel[pid])return;const np=JSON.parse(JSON.stringify(S.plantel));const l=posList(np[pid]).filter(x=>x!==g);if(!l.length)return;np[pid].gs=l;np[pid].g=l[0];await S.db.doc("config/plantel").set({players:np});toast(`${np[pid].n}: ${posNames(np[pid])}`);return}
   const rp=e.target.closest("[data-renp]");if(rp){const pid=rp.dataset.renp;const pl=S.plantel[pid];if(!pl)return;
-    openInfoSheet("Cambiar nombre",`<p class="small muted" style="margin:0 0 10px">${esc(pl.d)} · ${esc(posNames(pl))}. Se cambia en todos lados (equipos, puntos y tablas), porque el jugador es el mismo.</p><label class="f">Nombre<input type="text" id="renPName" maxlength="60" value="${esc(pl.n)}" autocomplete="off"></label><div class="row" style="margin-top:12px"><button class="btn primary" id="doRenP" data-pid="${esc(pid)}" style="flex:1">Guardar nombre</button></div>`);const i=$("#renPName");if(i){i.focus();i.select()}return}
+    openInfoSheet("Editar jugador",`<p class="small muted" style="margin:0 0 10px">${esc(pl.d)} · ${esc(posNames(pl))}. Se cambia en todos lados (equipos, puntos y tablas), porque el jugador es el mismo.</p><label class="f">Nombre completo<input type="text" id="renPName" maxlength="60" value="${esc(pl.n)}" autocomplete="off"></label><label class="f" style="margin-top:10px">En la camiseta<input type="text" id="renPShirt" maxlength="24" value="${esc(pl.c||"")}" placeholder="${esc(surname(pl.n))}" autocomplete="off"></label><p class="small muted" style="margin:6px 0 0">Vacío = se usa el apellido automático (${esc(surname(pl.n))}).</p><div class="row" style="margin-top:12px"><button class="btn primary" id="doRenP" data-pid="${esc(pid)}" style="flex:1">Guardar nombre</button></div>`);const i=$("#renPName");if(i){i.focus();i.select()}return}
   const dp=e.target.closest("[data-delp]");if(dp){const pid=dp.dataset.delp;if(dp.dataset.arm!=="1"){dp.dataset.arm="1";dp.textContent="Confirmar";setTimeout(()=>{if(dp.isConnected){dp.dataset.arm="";dp.textContent="Borrar"}},3000);return}
     const np=Object.assign({},S.plantel);delete np[pid];await S.db.doc("config/plantel").set({players:np});toast("Jugador borrado");return}
   if(id==="addFecha"){const n=$("#fNombre").value.trim();if(!n){toast("Poné un nombre a la fecha");return}const sab=$("#fSab").value;
