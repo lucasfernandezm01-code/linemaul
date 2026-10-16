@@ -1328,6 +1328,7 @@ $("#view").addEventListener("click",async e=>{
 /* ==================== LINE & MAUL · conexión con Supabase ==================== */
 const SB_URL="https://srdnktmbipvpvyzguuyk.supabase.co";
 const SB_KEY="sb_publishable_Z9QwgewyOFo0ujjxhCE91Q_OR8a_7yh";
+const LM_RECOVERY=/type=recovery/.test(location.hash+location.search);
 const sb=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 const J=v=>JSON.stringify(v==null?null:v);
 async function sbAll(table,cols){let out=[],from=0;for(;;){const {data,error}=await sb.from(table).select(cols).range(from,from+999);if(error)throw error;out=out.concat(data||[]);if(!data||data.length<1000)break;from+=1000}return out}
@@ -1418,7 +1419,7 @@ function drawAuth(){const m=S.authMode;const el=$("#sheet");
   if(m==="olvide")body=`<label class="f">Mail<input type="email" id="auEmail" autocomplete="email"></label><button class="btn primary" id="auGo">Mandarme el link</button><button class="btn sm" data-amode="in">Volver</button>`;
   if(m==="nueva")body=`<label class="f">Nueva contraseña (mínimo 6)<input type="password" id="auPass" autocomplete="new-password"></label><button class="btn primary" id="auGo">Guardar contraseña</button>`;
   if(m==="mail")body=`<p style="margin:0">${esc(S.authMsg||"")}</p><button class="btn primary" id="closeSheet">Listo</button>`;
-  if(m==="cuenta")body=`<div class="small muted">${esc(S.me&&S.me.email||"")}</div><label class="f">Tu nombre (así aparecés en las tablas)<input type="text" id="auNombre" maxlength="40" value="${esc(S.me&&S.me.nombre||"")}"></label><button class="btn primary" id="auSaveName">Guardar nombre</button><button class="btn" id="auOut">Cerrar sesión</button>`;
+  if(m==="cuenta")body=`<div class="small muted">${esc(S.me&&S.me.email||"")}</div><label class="f">Tu nombre (así aparecés en las tablas)<input type="text" id="auNombre" maxlength="40" value="${esc(S.me&&S.me.nombre||"")}"></label><button class="btn primary" id="auSaveName">Guardar nombre</button><button class="btn" data-amode="nueva">Cambiar contraseña</button><button class="btn" id="auOut">Cerrar sesión</button>`;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${tit}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${tit}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div>${m==="in"||m==="up"?`<div class="small muted">Con tu cuenta jugás el Fantasy y el Prode de Line &amp; Maul.</div>`:""}</div><div class="list" style="padding:16px;display:flex;flex-direction:column;gap:12px">${body}</div></div></div>`;
   const f=el.querySelector("input");if(f)setTimeout(()=>f.focus(),50)}
 const authErr=e=>{const s=String(e&&e.message||"");if(/invalid login/i.test(s))return "Mail o contraseña incorrectos.";if(/already registered|already exists/i.test(s))return "Ese mail ya tiene cuenta. Ingresá o recuperá la contraseña.";if(/password/i.test(s)&&/6/.test(s))return "La contraseña tiene que tener al menos 6 caracteres.";if(/email/i.test(s)&&/invalid/i.test(s))return "Revisá el mail.";if(/rate|too many/i.test(s))return "Demasiados intentos. Esperá unos minutos.";if(/not confirmed/i.test(s))return "Todavía no confirmaste tu mail. Revisá tu casilla.";return "No se pudo. Probá de nuevo."};
@@ -1464,7 +1465,8 @@ async function start(){
   if(!sb){S.db=null;render();return}
   const db=makeDb();S.db=db;S.user=lmUser;
   try{const {data}=await sb.auth.getSession();await applySession(data&&data.session)}catch(e){renderAuthBtn()}
-  sb.auth.onAuthStateChange((ev,session)=>{if(ev==="PASSWORD_RECOVERY"){setTimeout(()=>openAuth("nueva"),300)}setTimeout(()=>applySession(session),0)});
+  if(LM_RECOVERY){try{history.replaceState(null,"",location.pathname)}catch(e){}setTimeout(()=>{if(S.uid)openAuth("nueva");else toast("El link para cambiar la contraseña venció. Pedí uno nuevo.")},400)}
+  sb.auth.onAuthStateChange((ev,session)=>{if(ev==="PASSWORD_RECOVERY"&&S.authMode!=="nueva"){setTimeout(()=>openAuth("nueva"),300)}setTimeout(()=>applySession(session),0)});
   let got=0;const done=()=>{got++;if(got>=4){S.ready=true;render()}else if(S.ready)scheduleRender()};
   const once=fn=>{let first=true;return snap=>{fn(snap);if(first){first=false;done()}else scheduleRender()}};
   const err=()=>{};
