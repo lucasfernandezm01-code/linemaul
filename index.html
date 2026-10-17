@@ -120,6 +120,7 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .pvlist{display:flex;flex-direction:column;gap:14px;margin-top:10px}.pvm{display:flex;flex-direction:column;gap:5px}.pvt{display:flex;justify-content:space-between;gap:8px;font-size:15px}
 .pvbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--chip)}.pvbar i{display:block;height:100%}.pvbar .l{background:var(--accent)}.pvbar .e{background:var(--muted,#888);opacity:.5}.pvbar .v{background:#56c98b}
 .pvd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}.pvd>b{font-weight:600}
+.postbtns{display:grid;gap:8px;margin-top:10px}.postbtns .btn{justify-content:flex-start;text-align:left;gap:10px}.postbtns .btn b{color:var(--accent);font-family:var(--display);font-size:20px}
 .mcard{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}.mcard b{font:800 30px/1 var(--display);color:var(--accent)}.mcard span{font-weight:600;font-size:14px}.mcard small{font-size:12px;color:var(--muted)}
 .mbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.mbar i{display:block;width:100%;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent)}.mbar span{font-size:11px}.mbar small{font-size:10px;color:var(--muted)}
 .mclubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.mclubs div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px solid var(--line)}
@@ -890,7 +891,8 @@ async function buildCard(o){o=o||{};
   const DR=o.draft||S.draft;const picks=DR.picks;const rowsY=[py+22,py+138,py+255,py+371,py+487,py+604];const jw=112;
   ROWS.forEach((r,ri)=>{const gap=r.length===4?210:r.length===3?230:r.includes(9)?300:210;const x0=W/2-(r.length-1)*gap/2;
     r.forEach((slot,i)=>{const pid=picks[slot];const p=S.plantel[pid];const roles=[];if(p&&DR.kick===pid)roles.push("P");if(p&&DR.cap===pid)roles.push("C");
-      drawJersey(ctx,x0+i*gap,rowsY[ri],jw,slot,p?surname(p):"",roles,p?fdiv(pid):null)})});
+      drawJersey(ctx,x0+i*gap,rowsY[ri],jw,slot,p?surname(p):"",roles,p?fdiv(pid):null);
+      if(o.slotPts&&p&&o.slotPts[slot]!=null){const t2=String(o.slotPts[slot]);ctx.font='800 28px "Saira Condensed",sans-serif';const w2=ctx.measureText(t2).width+20;const tx=x0+i*gap-jw/2-14,ty=rowsY[ri]-4;ctx.fillStyle="#f2c21a";rr(ctx,tx,ty,w2,34,9);ctx.fill();ctx.fillStyle="#1c0b08";ctx.textAlign="center";ctx.fillText(t2,tx+w2/2,ty+27)}})});
   // pie
   const capP=S.plantel[DR.cap],kickP=S.plantel[DR.kick];
   const items=o.items||[["C",capP?surname(capP):"—","#f2c21a"],["P",kickP?surname(kickP):"—","#7cc4ff"],["HC",DR.hc?hcLabel(DR.hc):"—","#c9a8ff"]];
@@ -898,10 +900,110 @@ async function buildCard(o){o=o||{};
   let x=W/2-tot/2;const fy=1222;
   parts.forEach((pt,i)=>{const col=items[i][2];ctx.beginPath();ctx.arc(x+20,fy,20,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.fillStyle="#0d1f45";ctx.textAlign="center";ctx.font=`800 ${pt.b.length>1?18:22}px "Saira Condensed",sans-serif`;ctx.fillText(pt.b,x+20,fy+7);
     ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font='700 30px "Barlow",sans-serif';ctx.fillText(pt.n,x+50,fy+10);x+=pt.w+40});
-  if(!o.draft&&f.estado==="final"){const pts=teamFechaPts({fechas:{[f.id]:S.draft}},f.id);ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(pts+" PTS",W-64,160)}
+  if(o.pts!=null){ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(o.pts+" PTS",W-64,160)}else if(!o.draft&&f.estado==="final"){const pts=teamFechaPts({fechas:{[f.id]:S.draft}},f.id);ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(pts+" PTS",W-64,160)}
   ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='italic 700 24px "Saira Condensed",sans-serif';sp2(ctx,o.foot||"ARMÁ TU XV EN LINE & MAUL",W/2,1300,5);
   return c;
 }
+/* ---------- posteos para redes (Métricas): 4 posteos post fecha, cada uno con sus placas ---------- */
+async function PD_picks(fids){const {data,error}=await sb.rpc("mas_elegidos",{p_fids:fids});if(error||!data)throw new Error("No se pudieron leer los equipos");const cnt={},byG={};
+  for(const [k,n] of Object.entries(data.slot||{})){const [sl,pid]=k.split("|");if(!S.plantel[pid])continue;cnt[pid]=(cnt[pid]||0)+n;const g=SLOT_GROUP[+sl];if(g)(byG[g]=byG[g]||{})[pid]=(byG[g][pid]||0)+n}
+  return {teams:+data.teams||0,cnt,byG,cap:data.cap||{},hc:data.hc||{}}}
+async function PD_top(juegos,fid){const {data,error}=await sb.rpc("tabla",{p_juegos:juegos,p_fecha:fid||null,p_last:null,p_club:null,p_liga:null,p_limit:5});if(error)throw new Error("No se pudo leer la tabla");
+  return (data||[]).map(r=>({equipo:r.equipo||"",nombre:r.nombre||"",club:r.club||"",pts:fid?+r.fpts||0:+r.total||0})).sort((a,b)=>b.pts-a.pts).slice(0,5)}
+async function PD_votos(fid){const {data,error}=await sb.rpc("prode_votos",{p_fid:fid});if(error)throw new Error("Falta correr el SQL 06 en Supabase");return data||[]}
+async function PD_dl(){return lmDownloads}
+const esPatada=k=>KICKS.includes(k);
+function realPts(st){if(!st)return 0;let s=0;for(const [k] of STATS)if(!esPatada(k))s+=(+st[k]||0)*(+S.pts[k]||0);return s}
+function kickPts(st){if(!st)return 0;let s=0;for(const k of ["c","p"])s+=(+st[k]||0)*(+S.pts[k]||0);return s}
+function realDet(st){const o=[];const t=+st.t||0,g=+st.o||0;if(t)o.push(t+(t>1?" tries":" try"));if(g)o.push(g+" de oro");if(+st.m)o.push("MoM");if(+st.r)o.push("roja");else if(+st.a)o.push(+st.a>1?"amarillas":"amarilla");return o.join(" · ")}
+function sumStats(fs){const out={};for(const f of fs)for(const [pid,st] of Object.entries(f.stats||{})){const o=out[pid]||(out[pid]={});for(const [k,v] of Object.entries(st||{}))o[k]=(+o[k]||0)+(+v||0)}return out}
+function topReal(stats,n){return Object.entries(stats).filter(([pid])=>S.plantel[pid]).map(([pid,st])=>[pid,realPts(st),st]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]||(+b[2].t||0)-(+a[2].t||0)).slice(0,n)}
+function topObj(obj,n){return Object.entries(obj||{}).filter(([pid])=>S.plantel[pid]).sort((a,b)=>b[1]-a[1]).slice(0,n)}
+function xvDeLaGente(P){const used=new Set(),picks={};for(let sl=1;sl<=15;sl++){const c=topObj((P.byG||{})[SLOT_GROUP[sl]],40).find(([pid])=>!used.has(pid));if(c){picks[sl]=c[0];used.add(c[0])}}
+  const cp=topObj(P.cap,1)[0],hc=Object.entries(P.hc||{}).sort((a,b)=>b[1]-a[1])[0];return {picks,cp,hc}}
+function xvIdeal(f){const st=f.stats||{};const cand=Object.keys(st).filter(pid=>S.plantel[pid]).map(pid=>[pid,playerPts(st[pid])]).sort((a,b)=>b[1]-a[1]);const picks={};
+  for(const [pid] of cand){const gs=posList(S.plantel[pid]);const sl=Array.from({length:15},(_,i)=>i+1).find(x=>!picks[x]&&gs.includes(SLOT_GROUP[x]));if(sl)picks[sl]=pid;if(Object.keys(picks).length===15)break}
+  const xv=Object.values(picks);const cap=xv.slice().sort((a,b)=>realPts(st[b])-realPts(st[a]))[0]||null;const kick=xv.slice().sort((a,b)=>kickPts(st[b])-kickPts(st[a]))[0]||null;
+  const d={picks,cap,kick:kick&&kickPts(st[kick])>0?kick:null,hc:null,divs:{}};const slotPts={};let tot=0;for(const [sl,pid] of Object.entries(picks)){const v=rolePts(d,pid,st[pid]);slotPts[sl]=v;tot+=v}return {d,slotPts,tot}}
+/* placa de dos columnas: [{h,rows:[{name,sub,club,val}]}] */
+async function buildTwoCol(o){const {c,ctx,W}=await cardBase(o.eyebrow,o.title,o.sub);const gx=46,gap=28,cw=(W-gx*2-gap)/2;const top=372,rh=82;
+  o.cols.forEach((col,ci)=>{const x=gx+ci*(cw+gap);ctx.fillStyle="rgba(255,255,255,.05)";rr(ctx,x,top-6,cw,rh*10+86,22);ctx.fill();
+    ctx.textAlign="center";ctx.fillStyle="#f2c21a";ctx.font='italic 800 34px "Saira Condensed",sans-serif';sp2(ctx,col.h.toUpperCase(),x+cw/2,top+38,3);
+    if(!col.rows.length){ctx.fillStyle="rgba(255,255,255,.5)";ctx.font='600 26px "Barlow",sans-serif';ctx.textAlign="center";ctx.fillText("Sin datos",x+cw/2,top+120)}
+    col.rows.slice(0,10).forEach((r,i)=>{const y=top+64+i*rh,cy=y+rh/2;
+      ctx.textAlign="center";ctx.fillStyle=i===0?"#f2c21a":"rgba(255,255,255,.5)";ctx.font='italic 800 32px "Saira Condensed",sans-serif';ctx.fillText(String(i+1),x+30,cy+11);
+      clubDot(ctx,x+76,cy,19,r.club);
+      ctx.textAlign="left";ctx.fillStyle="#fff";fitText(ctx,r.name,cw-250,'700 $px "Barlow",sans-serif',28,18);ctx.fillText(r.name,x+106,cy-3);
+      ctx.fillStyle="rgba(255,255,255,.55)";fitText(ctx,r.sub||"",cw-250,'600 $px "Barlow",sans-serif',20,14);ctx.fillText(r.sub||"",x+106,cy+24);
+      ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 40px "Saira Condensed",sans-serif';ctx.fillText(String(r.val),x+cw-18,cy+14)})});
+  cardFoot(ctx,W,o.foot||"ARMÁ TU XV EN LINE & MAUL");return c}
+/* placa de tres tablas: [{h,rows:[{name,sub,val}]}] */
+async function buildBlocks(o){const {c,ctx,W}=await cardBase(o.eyebrow,o.title,o.sub);const x=56,w=W-112;const nb=o.blocks.length;const rh=nb>2?44:54;let y=nb>2?350:370;
+  o.blocks.forEach(b=>{const bh=52+Math.max(1,b.rows.length)*rh+10;ctx.fillStyle="rgba(255,255,255,.05)";rr(ctx,x,y,w,bh,20);ctx.fill();
+    ctx.textAlign="left";ctx.fillStyle="#f2c21a";ctx.font='italic 800 32px "Saira Condensed",sans-serif';sp2l(ctx,b.h.toUpperCase(),x+24,y+42,3);
+    if(!b.rows.length){ctx.fillStyle="rgba(255,255,255,.5)";ctx.font='600 24px "Barlow",sans-serif';ctx.fillText("Sin datos todavía",x+24,y+88)}
+    b.rows.forEach((r,i)=>{const cy=y+52+i*rh+rh/2+2;ctx.textAlign="center";ctx.fillStyle=i===0?"#f2c21a":"rgba(255,255,255,.5)";ctx.font='italic 800 30px "Saira Condensed",sans-serif';ctx.fillText(String(i+1),x+40,cy+10);
+      ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font='700 28px "Barlow",sans-serif';let nm=r.name||"—";while(ctx.measureText(nm).width>430&&nm.length>4)nm=nm.slice(0,-2)+"…";ctx.fillText(nm,x+76,cy+9);const nw=ctx.measureText(nm).width;
+      ctx.fillStyle="rgba(255,255,255,.55)";ctx.font='600 22px "Barlow",sans-serif';let sb=r.sub||"";const room=w-76-nw-150;while(sb&&ctx.measureText(sb).width>room&&sb.length>4)sb=sb.slice(0,-2)+"…";ctx.fillText(sb,x+76+nw+14,cy+8);
+      ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 38px "Saira Condensed",sans-serif';ctx.fillText(r.val+" pts",x+w-24,cy+12)});
+    y+=bh+14});
+  cardFoot(ctx,W,"JUGÁ EN LINE & MAUL");return c}
+/* pronósticos de la gente contra el resultado */
+async function buildProno(o){const {c,ctx,W}=await cardBase("PRODE · "+o.comp.toUpperCase(),"PRONÓSTICOS DE LA GENTE",o.sub);const ms=o.matches.slice(0,8);
+  const h=Math.min(118,880/Math.max(1,ms.length)),top=366+Math.max(0,(880-h*ms.length)/2-40);
+  ms.forEach((m,i)=>{const y=top+i*h;const nameY=y+38,barY=y+52,bh=20;const wl=m.win==="L",wv=m.win==="V";
+    clubDot(ctx,90,nameY-11,22,m.l);clubDot(ctx,W-90,nameY-11,22,m.v);
+    ctx.textAlign="left";ctx.fillStyle=wl?"#fff":"rgba(255,255,255,.7)";ctx.font='700 30px "Barlow",sans-serif';ctx.fillText(shortClub(m.l),124,nameY);const lw=ctx.measureText(shortClub(m.l)).width;
+    ctx.fillStyle="#f2c21a";ctx.font='800 38px "Saira Condensed",sans-serif';ctx.fillText(m.lp+"%",124+lw+12,nameY+2);
+    ctx.textAlign="right";ctx.fillStyle=wv?"#fff":"rgba(255,255,255,.7)";ctx.font='700 30px "Barlow",sans-serif';ctx.fillText(shortClub(m.v),W-124,nameY);const rw=ctx.measureText(shortClub(m.v)).width;
+    ctx.fillStyle="#56c98b";ctx.font='800 38px "Saira Condensed",sans-serif';ctx.fillText(m.vp+"%",W-124-rw-12,nameY+2);
+    if(m.res){ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font='800 40px "Saira Condensed",sans-serif';ctx.fillText(m.res,W/2,nameY+2)}
+    const bx=66,bw=W-132;ctx.save();rr(ctx,bx,barY,bw,bh,bh/2);ctx.clip();ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(bx,barY,bw,bh);
+    ctx.fillStyle="#f2c21a";ctx.fillRect(bx,barY,bw*m.lp/100,bh);ctx.fillStyle="rgba(255,255,255,.35)";ctx.fillRect(bx+bw*m.lp/100,barY,bw*m.ep/100,bh);ctx.fillStyle="#56c98b";ctx.fillRect(bx+bw*(m.lp+m.ep)/100,barY,bw*m.vp/100,bh);ctx.restore();
+    ctx.textAlign="center";ctx.font='600 22px "Barlow",sans-serif';ctx.fillStyle="rgba(255,255,255,.7)";ctx.fillText(m.res?`Acertó el ${m.ok}%${m.ex?` · ${m.ex} clavaron la diferencia`:""}${m.ep?` · Empate ${m.ep}%`:""}`:(m.ep?`Empate ${m.ep}%`:"Sin resultado"),W/2,barY+bh+26)});
+  cardFoot(ctx,W,"JUGÁ EL PRODE EN LINE & MAUL");return c}
+function prVotosMatches(f,rows,comp){const by={};for(const r of rows){const m=by[r.partido]||(by[r.partido]={L:{n:0,d:{}},V:{n:0,d:{}},E:{n:0}});const n=+r.n||0;m[r.w].n+=n;if(r.w!=="E")m[r.w].d[+r.d||0]=(m[r.w].d[+r.d||0]||0)+n}
+  const pc=(a,b)=>b?Math.round(a*100/b):0;
+  return prPartidos(f,[comp]).map(m=>{const x=by[m.id];if(!x)return null;const T=x.L.n+x.V.n+x.E.n;if(!T)return null;const lp=pc(x.L.n,T),vp=pc(x.V.n,T);const r=prMarc(f,m.id);
+    let res="",win=null,ok=0,ex=0;if(r){res=`${r.l} – ${r.v}`;win=r.l>r.v?"L":r.l<r.v?"V":"E";ok=pc(x[win].n,T);if(win!=="E")ex=x[win].d[Math.abs(r.l-r.v)]||0}
+    return {l:m.l,v:m.v,lp,vp,ep:Math.max(0,100-lp-vp),T,res,win,ok,ex}}).filter(Boolean)}
+async function postBuilders(n,f){const fins=finalFechas();const lab=f.nombre;const pc=(a,b)=>b?Math.round(a*100/b)+"%":"–";
+  if(n==="1"){const P=await PD_picks([f.id]);const g=xvDeLaGente(P);const cpP=g.cp&&S.plantel[g.cp[0]];const I=xvIdeal(f);const st=f.stats||{};
+    return [["xv-de-la-gente",()=>buildCard({draft:{picks:g.picks,cap:g.cp?g.cp[0]:null,hc:g.hc?g.hc[0]:null,divs:{}},team:"EL XV DE LA GENTE",sub:lab,f:{},items:[["C",cpP?surname(cpP)+" · "+pc(g.cp[1],P.teams):"—","#f2c21a"],["HC",g.hc?hcLabel(g.hc[0])+" · "+pc(g.hc[1],P.teams):"—","#c9a8ff"]]})],
+      ["xv-de-la-fecha",()=>{const cP=S.plantel[I.d.cap],kP=S.plantel[I.d.kick];return buildCard({draft:I.d,team:"EL XV DE LA FECHA",sub:lab,f:{},pts:I.tot,slotPts:I.slotPts,foot:"ARMÁ TU XV EN LINE & MAUL",items:[["C",cP?surname(cP)+" · "+rolePts(I.d,I.d.cap,st[I.d.cap]):"—","#f2c21a"],["P",kP?surname(kP)+" · "+kickPts(st[I.d.kick]):"—","#7cc4ff"]]})}]]}
+  if(n==="2"){const rows=await PD_votos(f.id);return COMP_IDS.map(c=>{const ms=prVotosMatches(f,rows,c);return ms.length?["pronosticos-"+c,()=>buildProno({comp:COMP_N[c],sub:lab,matches:ms})]:null}).filter(Boolean)}
+  if(n==="3"){const ff=topReal(f.stats||{},10),tt=topReal(sumStats(fins),10);const row=([pid,v,st])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+(realDet(st)?" · "+realDet(st):""),club:p.d,val:v}};
+    const Pf=await PD_picks([f.id]),Pt=await PD_picks(fins.map(x=>x.id));const prow=P=>([pid,k])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+" · "+posNames(p),club:p.d,val:pc(k,P.teams)}};
+    return [["mejores-jugadores",()=>buildTwoCol({eyebrow:"RUGBY · SIN PATADAS",title:"LOS MEJORES",sub:lab,cols:[{h:"La fecha",rows:ff.map(row)},{h:"La temporada",rows:tt.map(row)}],foot:"PUNTOS LINE & MAUL · TRIES, TRY DE ORO, MOM Y TARJETAS"})],
+      ["mas-elegidos",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"LOS MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cnt,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cnt,10).map(prow(Pt))}]})],
+      ["capitanes",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"CAPITANES MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cap,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cap,10).map(prow(Pt))}]})]]}
+  if(n==="4"){const games=[["Fantasy",["dt"]],...COMP_IDS.filter(c=>prFechas().some(x=>prPartidos(x,[c]).length)).map(c=>["Prode "+COMP_N[c],[c]])];
+    const mk=async fid=>Promise.all(games.map(async([h,j])=>{const rows=await PD_top(j,fid);return {h,rows:rows.map(r=>j[0]==="dt"?{name:r.equipo||r.nombre||"—",sub:[r.nombre,r.club].filter(Boolean).join(" · "),val:r.pts}:{name:r.nombre||"—",sub:r.club||"",val:r.pts})}}));
+    const bf=await mk(f.id),bg=await mk(null);
+    return [["top-5-fecha",()=>buildBlocks({eyebrow:"TOP 5",title:"LOS MEJORES DE LA FECHA",sub:lab,blocks:bf})],["top-5-general",()=>buildBlocks({eyebrow:"TOP 5",title:"TABLA GENERAL",sub:"Después de "+lab,blocks:bg})]]}
+  return []}
+const POSTS=[["1","XV de la gente + XV de la fecha"],["2","Pronósticos de la gente"],["3","Mejores, más elegidos y capitanes"],["4","Top 5 de la fecha y de la general"]];
+function mPostsHtml(){const fs=finalFechas();if(!fs.length)return `<div class="card"><h3>Posteos para redes</h3><p class="small muted" style="margin:0">Aparecen cuando haya una fecha con puntos publicados.</p></div>`;
+  const fid=S.mPostF&&fs.some(f=>f.id===S.mPostF)?S.mPostF:fs[fs.length-1].id;
+  return `<div class="card"><div class="row" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">Posteos para redes</h3><select id="mPostF" aria-label="Fecha">${fs.slice().reverse().map(f=>`<option value="${esc(f.id)}" ${f.id===fid?"selected":""}>${esc(f.nombre)}</option>`).join("")}</select></div>
+    <div class="postbtns">${POSTS.map(([k,n])=>`<button class="btn" data-post="${k}"><b class="num">${k}</b> ${esc(n)}</button>`).join("")}</div>
+    <p class="small muted" style="margin:6px 0 0">Se arman con la fecha elegida (ya jugada) y lo acumulado hasta ahí. Cada botón arma todas las placas del posteo.</p></div>`}
+let POST_IMGS=[];
+async function openPost(n){const fs=finalFechas();const fid=S.mPostF&&fs.some(f=>f.id===S.mPostF)?S.mPostF:(fs[fs.length-1]||{}).id;const f=S.fechas.find(x=>x.id===fid);if(!f)return;
+  const title=(POSTS.find(x=>x[0]===n)||[,""])[1];const el=$("#sheet");el.hidden=false;sheetRole="info";sheetSlot=null;
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${esc(title)}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:16px;display:flex;flex-direction:column;gap:14px;align-items:center"><div class="muted small">Armando las placas…</div></div></div></div>`;
+  const list=()=>el.querySelector(".list");
+  try{const bs=await postBuilders(n,f);if(!bs.length)throw new Error("No hay datos para esta fecha");POST_IMGS=[];
+    for(const [name,b] of bs){const c=await b();const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.92));POST_IMGS.push({name:`linemaul-${name}-${f.id}.jpg`,blob,url:URL.createObjectURL(blob)})}
+    S._dl=await PD_dl();if(!list())return;
+    list().innerHTML=`${POST_IMGS.length>1?`<button class="btn primary" id="postAll" style="width:100%;max-width:420px">Guardar las ${POST_IMGS.length} placas</button>`:""}
+      ${POST_IMGS.map((x,i)=>`<img class="cardimg" src="${x.url}" alt="Placa ${i+1}"><button class="btn${POST_IMGS.length>1?"":" primary"}" data-postsave="${i}" style="width:100%;max-width:420px">Guardar placa ${i+1}</button>`).join("")}
+      <div class="small muted" style="text-align:center">Si no se guardan, mantené apretada cada imagen y elegí <b>Guardar en Fotos</b>.</div>`}
+  catch(err){if(list())list().innerHTML=`<div class="empty">No se pudieron armar las placas.<div class="small" style="margin-top:6px">${esc(err&&err.message||"error")}</div></div>`}}
+async function postSave(idx){if(!S._dl){toast("Desde acá no se puede descargar. Mantené apretada la imagen para guardarla.");return}
+  for(const i of idx){const x=POST_IMGS[i];if(!x)continue;try{await S._dl.save({filename:x.name,data:x.blob})}catch(e){toast("No se pudo guardar.");return}await new Promise(r=>setTimeout(r,350))}toast(idx.length>1?"Placas guardadas":"Placa guardada")}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-post]");if(b){openPost(b.dataset.post);return}const sv=e.target.closest("[data-postsave]");if(sv){postSave([+sv.dataset.postsave]);return}if(e.target.id==="postAll")postSave(POST_IMGS.map((_,i)=>i))});
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="mPostF"){S.mPostF=e.target.value}});
 /* ---------- placas para redes (Métricas del admin) ---------- */
 async function cardBase(eyebrow,title,sub){
   try{const im=logoImg("dt");if(!im.complete)await new Promise(ok=>{im.onload=im.onerror=ok;setTimeout(ok,1500)})}catch(e){}
@@ -1373,6 +1475,7 @@ function adminMetricas(){const cur=mCur();const M=mFetch("metricas",{p_cur:cur?c
   <div class="card"><h3>Nuevos usuarios por semana</h3><div class="mbars">${bars}</div><p class="small muted" style="margin:6px 0 0">Últimas 10 semanas. Pasá el dedo o el mouse por cada barra para ver el total acumulado.</p></div>
   ${fRows?`<div class="card"><h3>Participación por fecha</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="r">Fantasy</th><th class="r">Prode</th><th class="r">Activos</th></tr></thead><tbody>${fRows}</tbody></table></div></div>`:""}
   ${clubs.length?`<div class="card"><h3>Usuarios por club</h3><div class="mclubs">${clubs.map(([c,n])=>`<div><span>${esc(c)}</span><b class="num">${n}</b></div>`).join("")}</div></div>`:""}
+  ${mPostsHtml()}
   ${mPlayersHtml()}
   ${mProdeHtml()}
   <div class="card"><h3>Usuarios</h3><input type="text" id="mq" placeholder="Buscar por equipo, nombre o club" autocomplete="off"><div class="mlist">${uRows||`<p class="muted small">Todavía no hay usuarios.</p>`}</div>${U>300?`<p class="small muted">Mostrando los 300 más nuevos de ${U}.</p>`:""}<p class="small muted" style="margin:6px 0 0">Tocá un usuario para ver su XV de la fecha actual (como admin lo ves aunque la fecha esté abierta).</p></div>
