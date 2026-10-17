@@ -547,7 +547,18 @@ function adminAvisos(){return `<div class="card"><h3>Mandar un aviso</h3><p clas
   <label class="f">Mensaje<textarea id="avB" rows="3" maxlength="180" placeholder="Ej: El que gane la fecha se lleva una camiseta oficial."></textarea></label>
   <label class="f">Al tocarlo abre<select id="avU"><option value="">Inicio</option><option value="?go=dt">Fantasy</option><option value="?go=prode">Prode</option></select></label>
   <div class="row"><button class="btn primary" id="avGo">Enviar aviso</button></div></div>
+  ${autoAvisosHtml()}
   <div class="card"><h3>Suscriptos y últimos avisos</h3><div id="avList" class="small muted">Cargando…</div></div>`}
+/* avisos automáticos (scripts/push.mjs): qué sale y cuándo para la fecha abierta o la próxima */
+function autoAvisosHtml(){const fs=sortedFechas();const f=fs.find(x=>x.estado==="abierta")||fs.find(x=>x.estado==="proxima")||null;
+  const cz=f&&f.cierra?Date.parse(f.cierra):null;const sat=cz&&new Date(cz-3*3600e3).getUTCDay()===6;
+  const when={abre:f&&f.abre?fmtDT(f.abre)+" h":"Lunes 8:00",form:sat?fmtDT(new Date(cz).toISOString().slice(0,10)+"T00:00:00Z")+" h":"Viernes 21:00",cierre:cz?fmtDT(new Date(cz-2*3600e3).toISOString())+" h":"2 h antes del cierre",puntos:"Al publicar los puntos"};
+  const rows=[["abre","Abrió la fecha","¡Abrió la fecha! 🏉","Armá tu XV y hacé el Prode.","Todos"],
+    ["form","Formaciones","Formaciones confirmadas","Ya están todas las formaciones. Confirmá tu XV de la fecha.","Todos"],
+    ["cierre","Cierre","La fecha cierra en 2 h ⏰","Todavía no armaste tu XV / no hiciste el Prode / ninguno de los dos.","Solo a los que les falta algo"],
+    ["puntos","Puntos","¡Puntos publicados!","Entrá y mirá cómo te fue en la fecha.","Todos"]];
+  return `<div class="card"><h3>Avisos automáticos</h3><p class="small muted" style="margin:0">Salen solos${f?` · próximos horarios de <b>${esc(f.nombre)}</b>`:""}. Se revisan cada 15 minutos, así que pueden llegar hasta 15 min después. Cada usuario puede apagar los que no quiera.</p>
+    <div style="display:flex;flex-direction:column">${rows.map(([k,n,t,b,who])=>`<div class="pdrow" style="align-items:flex-start;gap:10px"><div style="min-width:0"><b>${esc(t)}</b><div class="small muted">${esc(b)}</div><div class="small" style="margin-top:2px">${esc(who)}</div></div><span class="tag" style="white-space:nowrap">${esc(when[k])}</span></div>`).join("")}</div></div>`}
 async function loadAvisos(){const el=$("#avList");if(!el)return;try{const {count}=await sb.from("push_subs").select("endpoint",{count:"exact",head:true});
   const {data}=await sb.from("push_queue").select("*").order("id",{ascending:false}).limit(10);
   el.innerHTML=`<p style="margin:0 0 8px"><b class="num" style="font-size:22px;color:var(--accent)">${count||0}</b> celulares con notificaciones activadas.</p>`+((data||[]).map(q=>`<div class="pdrow"><div><b>${esc(q.title)}</b><div class="small muted">${esc(q.body)}</div></div><span class="small">${q.sent_at?`Enviado${q.sent_count!=null?" · "+q.sent_count:""}`:"Pendiente"}</span></div>`).join("")||"<p class='muted'>Todavía no mandaste avisos.</p>")}catch(err){el.textContent="No se pudo cargar. ¿Corriste el SQL de notificaciones?"}}
