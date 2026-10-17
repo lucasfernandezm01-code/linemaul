@@ -117,6 +117,9 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .cdots{display:flex;gap:4px;flex:none}.cdots i{width:12px;height:12px;border-radius:50%;background:var(--accent)}.cdots i.u{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
 .banner.cambios.sin .cdots i.u{box-shadow:inset 0 0 0 2px var(--accent);opacity:.6}
 .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pvlist{display:flex;flex-direction:column;gap:14px;margin-top:10px}.pvm{display:flex;flex-direction:column;gap:5px}.pvt{display:flex;justify-content:space-between;gap:8px;font-size:15px}
+.pvbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--chip)}.pvbar i{display:block;height:100%}.pvbar .l{background:var(--accent)}.pvbar .e{background:var(--muted,#888);opacity:.5}.pvbar .v{background:#56c98b}
+.pvd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}.pvd>b{font-weight:600}
 .mcard{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}.mcard b{font:800 30px/1 var(--display);color:var(--accent)}.mcard span{font-weight:600;font-size:14px}.mcard small{font-size:12px;color:var(--muted)}
 .mbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.mbar i{display:block;width:100%;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent)}.mbar span{font-size:11px}.mbar small{font-size:10px;color:var(--muted)}
 .mclubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.mclubs div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px solid var(--line)}
@@ -1273,6 +1276,26 @@ function mPlayersHtml(){const scope=S.mScope||"fecha";const cur=mCur();const fid
   else body=DIVS.map(d=>{const l=top(Object.fromEntries(Object.entries(cnt).filter(([pid])=>S.plantel[pid].d===d)),3);return l.length?`<div class="mpsub"><h4>${esc(d)}</h4>${l.map(([pid,n],i)=>row(pid,n,i)).join("")}</div>`:""}).join("");
   return headH+`<p class="small muted" style="margin:0">Solo titulares del XV. El % es sobre ${teams} equipo${teams===1?"":"s"} armado${teams===1?"":"s"}${scope==="temp"?" (sumando todas las fechas)":""}.</p><div class="mplist">${body}</div></div>`}
 document.addEventListener("click",e=>{const a=e.target.closest("[data-mscope],[data-mview]");if(!a)return;if(a.dataset.mscope)S.mScope=a.dataset.mscope;else S.mView=a.dataset.mview;render()});
+/* votos del prode por partido (solo admin): % por equipo y diferencia elegida */
+function prVotos(fid){const o=mFetch("prode_votos",{p_fid:fid});return {data:o.data,err:o.err?"No se pudieron cargar los votos. ¿Corriste el SQL 06 en Supabase?":null}}
+const PV_BANDS=[[1,7,"1–7"],[8,14,"8–14"],[15,999,"15+"]];
+function mProdeHtml(){const fs=prFechas().filter(f=>f.estado!=="proxima");if(!fs.length)return "";
+  let fid=S.mPrF&&fs.some(f=>f.id===S.mPrF)?S.mPrF:prDefaultFecha();if(!fs.some(f=>f.id===fid))fid=fs[fs.length-1].id;const f=S.fechas.find(x=>x.id===fid);
+  const sel=`<select id="mPrF" aria-label="Fecha del prode">${fs.slice().reverse().map(x=>`<option value="${esc(x.id)}" ${x.id===fid?"selected":""}>${esc(x.nombre)}</option>`).join("")}</select>`;
+  const V=prVotos(fid);const head=`<div class="row" style="justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">Prode · votos por partido</h3>${sel}</div>`;
+  if(!V.data)return `<div class="card">${head}<p class="muted small" style="margin:8px 0 0">${V.err||"Cargando…"}</p></div>`;
+  const by={};for(const r of V.data){const m=by[r.partido]||(by[r.partido]={L:{n:0,d:{}},V:{n:0,d:{}},E:{n:0}});const n=+r.n||0;m[r.w].n+=n;if(r.w!=="E"&&+r.d>0)m[r.w].d[+r.d]=(m[r.w].d[+r.d]||0)+n}
+  const pc=(a,b)=>b?Math.round(a*100/b):0;
+  const difs=(club,x)=>{const t=Object.values(x.d).reduce((a,n)=>a+n,0);if(!t)return "";const sum=Object.entries(x.d).reduce((a,[d,n])=>a+d*n,0);
+    return `<div class="pvd"><b>${esc(shortClub(club))} por</b>${PV_BANDS.map(([a,b,l])=>{const n=Object.entries(x.d).filter(([d])=>d>=a&&d<=b).reduce((s2,[,k])=>s2+k,0);return `<span>${l} <b class="num">${pc(n,t)}%</b></span>`}).join("")}<span class="muted">prom. <b class="num">${Math.round(sum/t)}</b></span></div>`};
+  const rows=prPartidos(f).map(m=>{const x=by[m.id]||{L:{n:0,d:{}},V:{n:0,d:{}},E:{n:0}};const T=x.L.n+x.V.n+x.E.n;
+    if(!T)return `<div class="pvm"><div class="pvt"><b>${esc(shortClub(m.l))}</b><span class="muted small">sin votos</span><b>${esc(shortClub(m.v))}</b></div></div>`;
+    const l=pc(x.L.n,T),v=pc(x.V.n,T),e=Math.max(0,100-l-v);
+    return `<div class="pvm"><div class="pvt"><span><b>${esc(shortClub(m.l))}</b> <span class="num">${l}%</span> <small class="muted">${x.L.n}</small></span><span style="text-align:right"><small class="muted">${x.V.n}</small> <span class="num">${v}%</span> <b>${esc(shortClub(m.v))}</b></span></div>
+      <div class="pvbar" role="img" aria-label="${esc(m.l)} ${l}%, empate ${e}%, ${esc(m.v)} ${v}%"><i class="l" style="width:${l}%"></i><i class="e" style="width:${e}%"></i><i class="v" style="width:${v}%"></i></div>
+      <div class="small muted">${x.E.n?`Empate ${x.E.n} (${e}%) · `:""}${T} voto${T>1?"s":""}</div>${difs(m.l,x.L)}${difs(m.v,x.V)}</div>`}).join("");
+  return `<div class="card">${head}<div class="pvlist">${rows||`<p class="muted small">Esta fecha no tiene partidos de prode.</p>`}</div><p class="small muted" style="margin:8px 0 0">Diferencia elegida por los que pusieron a cada equipo: por 1 a 7, 8 a 14 o 15 o más.</p></div>`}
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="mPrF"){S.mPrF=e.target.value;render()}});
 function adminMetricas(){const cur=mCur();const M=mFetch("metricas",{p_cur:cur?cur.id:""});const D=M.data;
   if(!D)return `<div class="card"><p class="muted" style="margin:0">${M.err?"No se pudieron cargar las métricas. ¿Corriste el SQL 05 en Supabase?":"Cargando métricas…"}</p></div>`;
   const U=+D.users||0;const pc=(a,b)=>b?Math.round(a*100/b)+"%":"–";const pf=D.por_fecha||{};
@@ -1293,6 +1316,7 @@ function adminMetricas(){const cur=mCur();const M=mFetch("metricas",{p_cur:cur?c
   ${fRows?`<div class="card"><h3>Participación por fecha</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="r">Fantasy</th><th class="r">Prode</th><th class="r">Activos</th></tr></thead><tbody>${fRows}</tbody></table></div></div>`:""}
   ${clubs.length?`<div class="card"><h3>Usuarios por club</h3><div class="mclubs">${clubs.map(([c,n])=>`<div><span>${esc(c)}</span><b class="num">${n}</b></div>`).join("")}</div></div>`:""}
   ${mPlayersHtml()}
+  ${mProdeHtml()}
   <div class="card"><h3>Usuarios</h3><input type="text" id="mq" placeholder="Buscar por equipo, nombre o club" autocomplete="off"><div class="mlist">${uRows||`<p class="muted small">Todavía no hay usuarios.</p>`}</div>${U>300?`<p class="small muted">Mostrando los 300 más nuevos de ${U}.</p>`:""}<p class="small muted" style="margin:6px 0 0">Tocá un usuario para ver su XV de la fecha actual (como admin lo ves aunque la fecha esté abierta).</p></div>
   ${lRows?`<div class="card"><h3>Torneos privados</h3><div class="tbl-wrap"><table><thead><tr><th>Torneo</th><th>Código</th><th class="r">Miembros</th></tr></thead><tbody>${lRows}</tbody></table></div></div>`:""}
   <div class="row"><button class="btn" id="mCopy">Copiar resumen</button><span class="small muted">Para pegar en un mail o una presentación.</span></div>`}
