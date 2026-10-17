@@ -1215,7 +1215,8 @@ function renderReglas(){
       <li><span class="rb hc">HC</span> <b>Head Coach:</b> elegís el entrenador de uno de los 14 clubes. Si su club gana, +3. Si pierde, −3. El empate no suma.</li>
     </ul></div>
     <div class="card"><h3>Puntos</h3><ul class="rules">
-      <li>Suman solo tus 15 titulares y solo lo que hacen en la Primera. Los suplentes no suman.</li>
+      <li>Suman solo tus 15 titulares y solo lo que hacen en la Primera.</li>
+      <li><b>Los suplentes no suman nunca</b>, ni siquiera si un titular tuyo no juega: no hay cambios automáticos. Sirven para cambiar tu XV de una fecha a otra sin gastar cambios.</li>
       <li><b>Try de oro:</b> si uno de tus jugadores hace un try faltando menos de 5 minutos y ese try define el partido, vale doble (+${+S.pts.o||0} en vez de +${+S.pts.t||0}).</li>
       <li><b>Man of the Match:</b> al final de cada transmisión se elige el jugador del partido. Si está entre tus titulares, suma +${+S.pts.m||0}.</li>
       <li><b>Tarjetas:</b> la amarilla resta ${Math.abs(+S.pts.a||0)} y la roja ${Math.abs(+S.pts.r||0)}. Dos amarillas que terminan en expulsión cuentan como una sola roja (−${Math.abs(+S.pts.r||0)}).</li>
