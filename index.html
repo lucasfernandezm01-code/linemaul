@@ -855,14 +855,14 @@ function drawLogo(ctx,cx,cy,r){const im=logoImg("dt");if(im.complete&&im.natural
 function drawLogoOld(ctx,cx,cy,r){ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle="#7c1a0e";ctx.fill();ctx.lineWidth=r*0.11;ctx.strokeStyle="#2349a8";ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,r*0.87,0,Math.PI*2);ctx.lineWidth=r*0.035;ctx.strokeStyle="#f2c21a";ctx.stroke();
   ctx.translate(cx,cy);ctx.rotate(-Math.PI*0.19);ctx.beginPath();ctx.ellipse(0,0,r*0.57,r*0.35,0,0,Math.PI*2);ctx.fillStyle="#f2c21a";ctx.fill();
   ctx.strokeStyle="#7c1a0e";ctx.lineWidth=r*0.06;ctx.beginPath();ctx.moveTo(-r*0.44,0);ctx.lineTo(r*0.44,0);ctx.stroke();ctx.lineCap="round";for(const x of [-0.21,-0.07,0.07,0.21]){ctx.beginPath();ctx.moveTo(r*x,-r*0.1);ctx.lineTo(r*x,r*0.1);ctx.stroke()}ctx.restore()}
-async function buildCard(){
+async function buildCard(o){o=o||{};
   try{const im=logoImg("dt");if(!im.complete)await new Promise(ok=>{im.onload=im.onerror=ok;setTimeout(ok,1500)})}catch(e){}
   const W=1080,H=1350;const c=document.createElement("canvas");c.width=W;c.height=H;const ctx=c.getContext("2d");
   try{await Promise.all([document.fonts.load('800 60px "Saira Condensed"'),document.fonts.load('italic 700 30px "Saira Condensed"'),document.fonts.load('600 30px "Barlow"')])}catch(e){}
   ctx.fillStyle="#1c0b08";ctx.fillRect(0,0,W,H);drawSkin(ctx,W,H);
   const vg=ctx.createRadialGradient(W/2,H*0.45,200,W/2,H*0.5,900);vg.addColorStop(0,"rgba(5,15,30,0)");vg.addColorStop(1,"rgba(5,15,30,.65)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
-  const f=S.fechas.find(x=>x.id===S.fechaSel)||{};const t=myTeam();const nameEl=$("#teamName");
-  const team=((nameEl&&nameEl.value)||(t&&t.nombre)||"Mi XV").trim();
+  const f=o.f||S.fechas.find(x=>x.id===S.fechaSel)||{};const t=myTeam();const nameEl=$("#teamName");
+  const team=o.team||((nameEl&&nameEl.value)||(t&&t.nombre)||"Mi XV").trim();
   // encabezado
   drawLogo(ctx,128,122,64);
   ctx.textAlign="left";ctx.fillStyle="#f2c21a";ctx.font='italic 700 28px "Saira Condensed","Arial Narrow",sans-serif';
@@ -870,7 +870,7 @@ async function buildCard(){
   sp("FANTASY RUGBY",220,92,9);
   ctx.fillStyle="#fff";ctx.font='800 70px "Saira Condensed","Arial Narrow",sans-serif';ctx.fillText("LINE &",220,160);
   const gw=ctx.measureText("LINE & ").width;ctx.fillStyle="#f2c21a";ctx.fillText("MAUL",220+gw,160);
-  ctx.fillStyle="rgba(255,255,255,.75)";ctx.font='italic 700 26px "Saira Condensed",sans-serif';sp((f.nombre||"").toUpperCase(),222,200,4);
+  ctx.fillStyle="rgba(255,255,255,.75)";ctx.font='italic 700 26px "Saira Condensed",sans-serif';sp((o.sub||f.nombre||"").toUpperCase(),222,200,4);
   // nombre del equipo
   ctx.textAlign="center";ctx.fillStyle="#fff";let fs=64;ctx.font=`italic 800 ${fs}px "Saira Condensed",sans-serif`;
   while(ctx.measureText(team.toUpperCase()).width>W-140&&fs>34){fs-=2;ctx.font=`italic 800 ${fs}px "Saira Condensed",sans-serif`}
@@ -887,28 +887,85 @@ async function buildCard(){
   ctx.save();ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=3;ctx.setLineDash([12,14]);[0.07,0.21,0.79,0.93].forEach(fx=>{ctx.beginPath();ctx.moveTo(ix+iw*fx,iy);ctx.lineTo(ix+iw*fx,tryY);ctx.stroke()});ctx.restore();
   ctx.fillStyle="rgba(255,255,255,.45)";ctx.font='italic 800 26px "Saira Condensed",sans-serif';[[0.18,"10"],[0.52,"22"]].forEach(([fy,t2])=>{const y=iy+span*fy-8;ctx.textAlign="left";ctx.fillText(t2,ix+10,y);ctx.textAlign="right";ctx.fillText(t2,ix+iw-10,y)});
   ctx.save();ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=6;ctx.lineCap="round";const cx2=W/2;ctx.beginPath();ctx.moveTo(cx2-36,tryY);ctx.lineTo(cx2-36,tryY-52);ctx.moveTo(cx2+36,tryY);ctx.lineTo(cx2+36,tryY-52);ctx.moveTo(cx2-36,tryY-20);ctx.lineTo(cx2+36,tryY-20);ctx.stroke();ctx.fillStyle="#f2c21a";ctx.fillRect(cx2-42,tryY-20,12,20);ctx.fillRect(cx2+30,tryY-20,12,20);ctx.restore();
-  const picks=S.draft.picks;const rowsY=[py+22,py+138,py+255,py+371,py+487,py+604];const jw=112;
+  const DR=o.draft||S.draft;const picks=DR.picks;const rowsY=[py+22,py+138,py+255,py+371,py+487,py+604];const jw=112;
   ROWS.forEach((r,ri)=>{const gap=r.length===4?210:r.length===3?230:r.includes(9)?300:210;const x0=W/2-(r.length-1)*gap/2;
-    r.forEach((slot,i)=>{const pid=picks[slot];const p=S.plantel[pid];const roles=[];if(p&&S.draft.kick===pid)roles.push("P");if(p&&S.draft.cap===pid)roles.push("C");
+    r.forEach((slot,i)=>{const pid=picks[slot];const p=S.plantel[pid];const roles=[];if(p&&DR.kick===pid)roles.push("P");if(p&&DR.cap===pid)roles.push("C");
       drawJersey(ctx,x0+i*gap,rowsY[ri],jw,slot,p?surname(p):"",roles,p?fdiv(pid):null)})});
   // pie
-  const capP=S.plantel[S.draft.cap],kickP=S.plantel[S.draft.kick];
-  const items=[["C",capP?surname(capP):"—","#f2c21a"],["P",kickP?surname(kickP):"—","#7cc4ff"],["HC",S.draft.hc?hcLabel(S.draft.hc):"—","#c9a8ff"]];
+  const capP=S.plantel[DR.cap],kickP=S.plantel[DR.kick];
+  const items=o.items||[["C",capP?surname(capP):"—","#f2c21a"],["P",kickP?surname(kickP):"—","#7cc4ff"],["HC",DR.hc?hcLabel(DR.hc):"—","#c9a8ff"]];
   ctx.font='700 30px "Barlow",sans-serif';const parts=items.map(([b,n])=>({b,n,w:ctx.measureText(n).width+62}));const tot=parts.reduce((a,x)=>a+x.w,0)+40*(parts.length-1);
   let x=W/2-tot/2;const fy=1222;
   parts.forEach((pt,i)=>{const col=items[i][2];ctx.beginPath();ctx.arc(x+20,fy,20,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.fillStyle="#0d1f45";ctx.textAlign="center";ctx.font=`800 ${pt.b.length>1?18:22}px "Saira Condensed",sans-serif`;ctx.fillText(pt.b,x+20,fy+7);
     ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font='700 30px "Barlow",sans-serif';ctx.fillText(pt.n,x+50,fy+10);x+=pt.w+40});
-  if(f.estado==="final"){const pts=teamFechaPts({fechas:{[f.id]:S.draft}},f.id);ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(pts+" PTS",W-64,160)}
-  ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='italic 700 24px "Saira Condensed",sans-serif';sp2(ctx,"ARMÁ TU XV EN LINE & MAUL",W/2,1300,5);
+  if(!o.draft&&f.estado==="final"){const pts=teamFechaPts({fechas:{[f.id]:S.draft}},f.id);ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(pts+" PTS",W-64,160)}
+  ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='italic 700 24px "Saira Condensed",sans-serif';sp2(ctx,o.foot||"ARMÁ TU XV EN LINE & MAUL",W/2,1300,5);
   return c;
 }
+/* ---------- placas para redes (Métricas del admin) ---------- */
+async function cardBase(eyebrow,title,sub){
+  try{const im=logoImg("dt");if(!im.complete)await new Promise(ok=>{im.onload=im.onerror=ok;setTimeout(ok,1500)})}catch(e){}
+  const W=1080,H=1350;const c=document.createElement("canvas");c.width=W;c.height=H;const ctx=c.getContext("2d");
+  try{await Promise.all([document.fonts.load('800 60px "Saira Condensed"'),document.fonts.load('italic 700 30px "Saira Condensed"'),document.fonts.load('600 30px "Barlow"'),document.fonts.load('700 30px "Barlow"')])}catch(e){}
+  ctx.fillStyle="#1c0b08";ctx.fillRect(0,0,W,H);drawSkin(ctx,W,H);
+  const vg=ctx.createRadialGradient(W/2,H*0.45,200,W/2,H*0.5,900);vg.addColorStop(0,"rgba(5,15,30,0)");vg.addColorStop(1,"rgba(5,15,30,.65)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  drawLogo(ctx,128,122,64);ctx.fillStyle="#f2c21a";ctx.font='italic 700 28px "Saira Condensed",sans-serif';sp2l(ctx,eyebrow,220,92,9);
+  ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font='800 70px "Saira Condensed",sans-serif';ctx.fillText("LINE &",220,160);const gw=ctx.measureText("LINE & ").width;ctx.fillStyle="#f2c21a";ctx.fillText("MAUL",220+gw,160);
+  ctx.fillStyle="rgba(255,255,255,.75)";ctx.font='italic 700 26px "Saira Condensed",sans-serif';sp2l(ctx,(sub||"").toUpperCase(),222,200,4);
+  ctx.textAlign="center";ctx.fillStyle="#fff";let fs=74;ctx.font=`italic 800 ${fs}px "Saira Condensed",sans-serif`;while(ctx.measureText(title).width>W-120&&fs>40){fs-=2;ctx.font=`italic 800 ${fs}px "Saira Condensed",sans-serif`}
+  ctx.fillText(title,W/2,300);ctx.fillStyle="#f2c21a";ctx.fillRect(W/2-60,322,120,6);return {c,ctx,W,H}}
+function sp2l(ctx,t,x,y,ls){ctx.textAlign="left";for(const ch of t){ctx.fillText(ch,x,y);x+=ctx.measureText(ch).width+ls}}
+function clubDot(ctx,x,y,r,club){const k=kitOf(club)||{};ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=k.c1||"#555";ctx.fill();ctx.lineWidth=r*0.32;ctx.strokeStyle=k.c2||"#999";ctx.beginPath();ctx.arc(x,y,r*0.84,0,Math.PI*2);ctx.stroke();ctx.lineWidth=3;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();ctx.restore()}
+function fitText(ctx,t,max,font,size,min){let fs=size;ctx.font=font.replace("$",fs);while(ctx.measureText(t).width>max&&fs>min){fs-=2;ctx.font=font.replace("$",fs)}}
+function cardFoot(ctx,W,t){ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='italic 700 24px "Saira Condensed",sans-serif';sp2(ctx,t,W/2,1300,5)}
+/* ranking: [{name,sub,club,pct}] */
+async function buildListCard(o){const {c,ctx,W}=await cardBase(o.eyebrow,o.title,o.sub);const rows=o.rows.slice(0,8);
+  const h=Math.min(118,878/Math.max(1,rows.length)),top=372+Math.max(0,(878-h*rows.length)/2-40);
+  rows.forEach((r,i)=>{const y=top+i*h,cy=y+h/2;
+    if(i===0){ctx.fillStyle="rgba(242,194,26,.10)";rr(ctx,52,y+6,W-104,h-12,18);ctx.fill()}
+    ctx.textAlign="center";ctx.fillStyle=i===0?"#f2c21a":"rgba(255,255,255,.55)";ctx.font='italic 800 46px "Saira Condensed",sans-serif';ctx.fillText(String(i+1),100,cy+16);
+    clubDot(ctx,172,cy,30,r.club);
+    ctx.textAlign="left";ctx.fillStyle="#fff";fitText(ctx,r.name,560,'700 $px "Barlow",sans-serif',40,26);ctx.fillText(r.name,224,cy-4);
+    ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='600 26px "Barlow",sans-serif';ctx.fillText(r.sub||"",224,cy+32);
+    ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 60px "Saira Condensed",sans-serif';ctx.fillText(r.pct+"%",W-70,cy+20)});
+  cardFoot(ctx,W,o.foot||"ARMÁ TU XV EN LINE & MAUL");return c}
+/* prode: [{l,v,lp,ep,vp,T}] */
+async function buildProdeCard(o){const {c,ctx,W}=await cardBase("PRODE","LO QUE VOTA LA GENTE",o.sub);const ms=o.matches.slice(0,8);
+  const h=Math.min(132,880/Math.max(1,ms.length)),top=370+Math.max(0,(880-h*ms.length)/2-40);
+  ms.forEach((m,i)=>{const y=top+i*h;const nameY=y+h*0.42,barY=y+h*0.58,bh=Math.min(26,h*0.2);
+    clubDot(ctx,92,nameY-12,24,m.l);clubDot(ctx,W-92,nameY-12,24,m.v);
+    ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font='700 34px "Barlow",sans-serif';ctx.fillText(shortClub(m.l),130,nameY);
+    ctx.fillStyle="#f2c21a";ctx.font='800 42px "Saira Condensed",sans-serif';const lw=ctx.measureText(shortClub(m.l)).width;ctx.font='700 34px "Barlow",sans-serif';const lw2=ctx.measureText(shortClub(m.l)).width;ctx.font='800 42px "Saira Condensed",sans-serif';ctx.fillText(m.lp+"%",130+lw2+16,nameY+2);
+    ctx.textAlign="right";ctx.fillStyle="#fff";ctx.font='700 34px "Barlow",sans-serif';ctx.fillText(shortClub(m.v),W-130,nameY);const rw=ctx.measureText(shortClub(m.v)).width;
+    ctx.fillStyle="#56c98b";ctx.font='800 42px "Saira Condensed",sans-serif';ctx.fillText(m.vp+"%",W-130-rw-16,nameY+2);
+    const bx=68,bw=W-136;ctx.save();rr(ctx,bx,barY,bw,bh,bh/2);ctx.clip();ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(bx,barY,bw,bh);
+    ctx.fillStyle="#f2c21a";ctx.fillRect(bx,barY,bw*m.lp/100,bh);ctx.fillStyle="rgba(255,255,255,.35)";ctx.fillRect(bx+bw*m.lp/100,barY,bw*m.ep/100,bh);ctx.fillStyle="#56c98b";ctx.fillRect(bx+bw*(m.lp+m.ep)/100,barY,bw*m.vp/100,bh);ctx.restore();
+    if(m.ep){ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='600 22px "Barlow",sans-serif';ctx.fillText(`Empate ${m.ep}%`,W/2,barY+bh+26)}});
+  cardFoot(ctx,W,"JUGÁ EL PRODE EN LINE & MAUL");return c}
+function shotData(kind){const P=S._mp;if(kind==="prode")return S._pv;if(!P||!P.teams)return null;
+  const pc=n=>Math.round(n*100/P.teams);const top=(obj,n)=>Object.entries(obj||{}).filter(([k])=>kind==="hc"||S.plantel[k]).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  const pr=([pid,n])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+" · "+posNames(p),club:p.d,pct:pc(n)}};
+  if(kind==="top")return {eyebrow:"FANTASY RUGBY",title:"LOS MÁS ELEGIDOS",sub:P.label,rows:top(P.cnt,8).map(pr)};
+  if(kind==="cap")return {eyebrow:"FANTASY RUGBY",title:"CAPITANES MÁS ELEGIDOS",sub:P.label,rows:top(P.cap,6).map(pr)};
+  if(kind==="xv"){const used=new Set(),picks={};for(let sl=1;sl<=15;sl++){const g=SLOT_GROUP[sl];const c=top((P.byG||{})[g],40).find(([pid])=>!used.has(pid));if(c){picks[sl]=c[0];used.add(c[0])}}
+    const cp=top(P.cap,1)[0],hc=Object.entries(P.hc||{}).sort((a,b)=>b[1]-a[1])[0];
+    return {draft:{picks,cap:cp?cp[0]:null,hc:hc?hc[0]:null,divs:{}},cp,hc}}
+  return null}
+async function openShot(kind){const d=shotData(kind);if(!d){toast("Todavía no hay datos para armar la placa.");return}
+  const lab=(S._mp&&S._mp.label)||"";const slug=x=>String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  if(kind==="xv"){const P=S._mp;const pc=n=>Math.round(n*100/P.teams)+"%";const cpP=d.cp&&S.plantel[d.cp[0]];
+    S._shareName="xv-de-la-gente-"+slug(lab);return openShare(()=>buildCard({draft:d.draft,team:"EL XV DE LA GENTE",sub:lab,f:{},items:[["C",cpP?surname(cpP)+" · "+pc(d.cp[1]):"—","#f2c21a"],["HC",d.hc?hcLabel(d.hc[0])+" · "+pc(d.hc[1]):"—","#c9a8ff"]]}),"El XV de la gente")}
+  if(kind==="prode"){S._shareName="prode-votos-"+slug(d.sub);return openShare(()=>buildProdeCard(d),"Lo que vota la gente")}
+  S._shareName=(kind==="cap"?"capitanes-":"mas-elegidos-")+slug(lab);return openShare(()=>buildListCard(d),kind==="cap"?"Capitanes más elegidos":"Los más elegidos")}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-shot]");if(b)openShot(b.dataset.shot)});
+const SHOT_BTNS=`<div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" data-shot="xv">📸 XV de la gente</button><button class="btn sm" data-shot="top">📸 Más elegidos</button><button class="btn sm" data-shot="cap">📸 Capitanes</button></div><p class="small muted" style="margin:6px 0 0">Placas para redes con lo que se ve arriba (fecha o temporada).</p>`;
 function sp2(ctx,t,cx,y,ls){ctx.textAlign="left";let w=0;for(const ch of t)w+=ctx.measureText(ch).width+ls;w-=ls;let x=cx-w/2;for(const ch of t){ctx.fillText(ch,x,y);x+=ctx.measureText(ch).width+ls}}
 let shareBlob=null;
-async function openShare(){
+async function openShare(build,title){title=title||"Compartir mi XV";if(typeof build!=="function"){build=null;S._shareName=null}
   const el=$("#sheet");el.hidden=false;
-  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Compartir mi XV"><div class="hd"><div class="row" style="justify-content:space-between"><h2>Compartir mi XV</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center"><div class="muted small">Armando la placa…</div></div></div></div>`;
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${esc(title)}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center"><div class="muted small">Armando la placa…</div></div></div></div>`;
   try{
-    const c=await buildCard();shareBlob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.92));
+    const c=await (build||buildCard)();shareBlob=await new Promise(r=>c.toBlob(r,"image/jpeg",0.92));
     const url=shareBlob?URL.createObjectURL(shareBlob):c.toDataURL("image/jpeg",0.92);
     let dl=lmDownloads;
     const list=el.querySelector(".list");if(!list)return;
@@ -987,7 +1044,7 @@ function renderSheet(){
 }
 $("#sheet").addEventListener("click",async e=>{
   if(e.target.id==="scrim"||e.target.id==="closeSheet"){closeSheet();return}
-  if(e.target.id==="saveCard"&&shareBlob){const b=e.target;if(!S._dl){toast("Desde acá no se puede descargar. Mantené apretada la imagen para guardarla.");return}b.disabled=true;try{const nm=(($("#teamName")&&$("#teamName").value)||"mi-xv").trim().replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g,"").replace(/\s+/g,"-")||"mi-xv";await S._dl.save({filename:`linemaul-${nm}.jpg`,data:shareBlob});toast("Imagen guardada")}catch(err){if(!err||err.code!=="declined")toast(`No se pudo guardar (${(err&&err.code)||"error"}). Mantené apretada la imagen.`)}b.disabled=false;return}
+  if(e.target.id==="saveCard"&&shareBlob){const b=e.target;if(!S._dl){toast("Desde acá no se puede descargar. Mantené apretada la imagen para guardarla.");return}b.disabled=true;try{const nm=(S._shareName||($("#teamName")&&$("#teamName").value)||"mi-xv").trim().replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]/g,"").replace(/\s+/g,"-")||"mi-xv";await S._dl.save({filename:`linemaul-${nm}.jpg`,data:shareBlob});toast("Imagen guardada")}catch(err){if(!err||err.code!=="declined")toast(`No se pudo guardar (${(err&&err.code)||"error"}). Mantené apretada la imagen.`)}b.disabled=false;return}
   const hb=e.target.closest("[data-hc-pick]");if(hb&&!hb.disabled){const d=hb.dataset.hcPick;S.draft.hc=S.draft.hc===d?null:d;S.dirty=true;closeSheet();render();return}
   const rb=e.target.closest("[data-role-pick]");if(rb&&!rb.disabled){const r=sheetRole;const id=rb.dataset.rolePick;S.draft[r]=S.draft[r]===id?null:id;S.dirty=true;closeSheet();render();return}
   if(e.target.id==="removeP"){const cur=S.draft.picks[sheetSlot];clearRoles(cur);delete S.draft.picks[sheetSlot];if(S.draft.divs)delete S.draft.divs[cur];S.dirty=true;closeSheet();render();return}
@@ -1264,7 +1321,7 @@ function mPlayersHtml(){const scope=S.mScope||"fecha";const cur=mCur();const fid
   <div class="chips" role="group">${chip("mview","general","General",view)}${chip("mview","puesto","Por puesto",view)}${chip("mview","club","Por club",view)}</div>`;
   if(!D)return headH+`<p class="small muted" style="margin:0">${M.err?"No se pudo cargar.":"Cargando…"}</p></div>`;
   const teams=+D.teams||0;const cnt={},byG={};for(const [k,n] of Object.entries(D.slot||{})){const [sl,pid]=k.split("|");if(!S.plantel[pid])continue;cnt[pid]=(cnt[pid]||0)+n;const g=SLOT_GROUP[+sl];if(g){(byG[g]=byG[g]||{})[pid]=(byG[g][pid]||0)+n}}
-  const pc=n=>teams?Math.round(n*100/teams)+"%":"";const top=(obj,n)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  S._mp={teams,cnt,byG,cap:D.cap||{},hc:D.hc||{},label:scope==="fecha"&&cur?cur.nombre:"Temporada"};const pc=n=>teams?Math.round(n*100/teams)+"%":"";const top=(obj,n)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
   const row=(pid,n,i)=>{const p=S.plantel[pid];return `<div class="mprow"><span class="num muted">${i+1}</span><span class="mpn"><b>${esc(p.n)}</b><small>${esc(shortClub(p.d))} · ${esc(posNames(p))}</small></span><span class="mpv"><b class="num">${n}</b><small>${pc(n)}</small></span></div>`};
   let body="";
   if(!teams)body=`<p class="muted small" style="margin:0">Todavía no hay equipos armados${scope==="fecha"?" en esta fecha":""}.</p>`;
@@ -1274,7 +1331,7 @@ function mPlayersHtml(){const scope=S.mScope||"fecha";const cur=mCur();const fid
     body+=`<div class="mpsub"><h4>Head Coach más elegidos</h4>${h.map(([cl,n],i)=>`<div class="mprow"><span class="num muted">${i+1}</span><span class="mpn"><b>${esc(coachOf(cl)||cl)}</b><small>${esc(cl)}</small></span><span class="mpv"><b class="num">${n}</b><small>${pc(n)}</small></span></div>`).join("")||'<p class="muted small">—</p>'}</div>`}
   else if(view==="puesto")body=Object.keys(GROUPS).map(g=>{const l=top(byG[g]||{},3);return l.length?`<div class="mpsub"><h4>${GROUPS[g].n}</h4>${l.map(([pid,n],i)=>row(pid,n,i)).join("")}</div>`:""}).join("");
   else body=DIVS.map(d=>{const l=top(Object.fromEntries(Object.entries(cnt).filter(([pid])=>S.plantel[pid].d===d)),3);return l.length?`<div class="mpsub"><h4>${esc(d)}</h4>${l.map(([pid,n],i)=>row(pid,n,i)).join("")}</div>`:""}).join("");
-  return headH+`<p class="small muted" style="margin:0">Solo titulares del XV. El % es sobre ${teams} equipo${teams===1?"":"s"} armado${teams===1?"":"s"}${scope==="temp"?" (sumando todas las fechas)":""}.</p><div class="mplist">${body}</div></div>`}
+  return headH+`<p class="small muted" style="margin:0">Solo titulares del XV. El % es sobre ${teams} equipo${teams===1?"":"s"} armado${teams===1?"":"s"}${scope==="temp"?" (sumando todas las fechas)":""}.</p><div class="mplist">${body}</div>${SHOT_BTNS}</div>`}
 document.addEventListener("click",e=>{const a=e.target.closest("[data-mscope],[data-mview]");if(!a)return;if(a.dataset.mscope)S.mScope=a.dataset.mscope;else S.mView=a.dataset.mview;render()});
 /* votos del prode por partido (solo admin): % por equipo y diferencia elegida */
 function prVotos(fid){const o=mFetch("prode_votos",{p_fid:fid});return {data:o.data,err:o.err?"No se pudieron cargar los votos. ¿Corriste el SQL 06 en Supabase?":null}}
@@ -1294,7 +1351,8 @@ function mProdeHtml(){const fs=prFechas().filter(f=>f.estado!=="proxima");if(!fs
     return `<div class="pvm"><div class="pvt"><span><b>${esc(shortClub(m.l))}</b> <span class="num">${l}%</span> <small class="muted">${x.L.n}</small></span><span style="text-align:right"><small class="muted">${x.V.n}</small> <span class="num">${v}%</span> <b>${esc(shortClub(m.v))}</b></span></div>
       <div class="pvbar" role="img" aria-label="${esc(m.l)} ${l}%, empate ${e}%, ${esc(m.v)} ${v}%"><i class="l" style="width:${l}%"></i><i class="e" style="width:${e}%"></i><i class="v" style="width:${v}%"></i></div>
       <div class="small muted">${x.E.n?`Empate ${x.E.n} (${e}%) · `:""}${T} voto${T>1?"s":""}</div>${difs(m.l,x.L)}${difs(m.v,x.V)}</div>`}).join("");
-  return `<div class="card">${head}<div class="pvlist">${rows||`<p class="muted small">Esta fecha no tiene partidos de prode.</p>`}</div><p class="small muted" style="margin:8px 0 0">Diferencia elegida por los que pusieron a cada equipo: por 1 a 7, 8 a 14 o 15 o más.</p></div>`}
+  S._pv={sub:f.nombre,matches:prPartidos(f).map(m=>{const x=by[m.id];if(!x)return null;const T=x.L.n+x.V.n+x.E.n;if(!T)return null;const lp=pc(x.L.n,T),vp=pc(x.V.n,T);return {l:m.l,v:m.v,lp,vp,ep:Math.max(0,100-lp-vp),T}}).filter(Boolean)};if(!S._pv.matches.length)S._pv=null;
+  return `<div class="card">${head}<div class="pvlist">${rows||`<p class="muted small">Esta fecha no tiene partidos de prode.</p>`}</div><p class="small muted" style="margin:8px 0 0">Diferencia elegida por los que pusieron a cada equipo: por 1 a 7, 8 a 14 o 15 o más.</p><div class="row" style="margin-top:10px"><button class="btn sm" data-shot="prode">📸 Placa para redes</button></div></div>`}
 document.addEventListener("change",e=>{if(e.target&&e.target.id==="mPrF"){S.mPrF=e.target.value;render()}});
 function adminMetricas(){const cur=mCur();const M=mFetch("metricas",{p_cur:cur?cur.id:""});const D=M.data;
   if(!D)return `<div class="card"><p class="muted" style="margin:0">${M.err?"No se pudieron cargar las métricas. ¿Corriste el SQL 05 en Supabase?":"Cargando métricas…"}</p></div>`;
