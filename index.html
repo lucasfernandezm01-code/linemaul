@@ -121,6 +121,7 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .pvbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--chip)}.pvbar i{display:block;height:100%}.pvbar .l{background:var(--accent)}.pvbar .e{background:var(--muted,#888);opacity:.5}.pvbar .v{background:#56c98b}
 .pvd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}.pvd>b{font-weight:600}
 .postbtns{display:grid;gap:8px;margin-top:10px}.postbtns .btn{justify-content:flex-start;text-align:left;gap:10px}.postbtns .btn b{color:var(--accent);font-family:var(--display);font-size:20px}
+.newver{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--card,#2a1612);border:1px solid var(--accent);box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:14px}
 .mcard{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}.mcard b{font:800 30px/1 var(--display);color:var(--accent)}.mcard span{font-weight:600;font-size:14px}.mcard small{font-size:12px;color:var(--muted)}
 .mbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.mbar i{display:block;width:100%;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent)}.mbar span{font-size:11px}.mbar small{font-size:10px;color:var(--muted)}
 .mclubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.mclubs div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px solid var(--line)}
@@ -509,6 +510,19 @@ function installHtml(){if(isStandalone())return "";
 document.addEventListener("click",async e=>{if(e.target.closest("#instGo")&&_bip){_bip.prompt();try{await _bip.userChoice}catch(err){}_bip=null;render();return}
   if(e.target.closest("#instX")){try{localStorage.setItem("lm-inst-x","1")}catch(err){}render()}});
 if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/* versión nueva: al volver a la app (o cada 10 min) se fija si cambió el sitio; si no estás editando nada, recarga sola; si no, avisa */
+const VER={base:null,busy:false,at:0};
+async function verSig(){const r=await fetch("index.html?v="+Date.now(),{cache:"no-store"});if(!r.ok)return null;const t=await r.text();let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return t.length+":"+h}
+async function verCheck(){if(VER.busy||location.protocol!=="https:"||Date.now()-VER.at<60000)return;VER.busy=true;VER.at=Date.now();
+  try{const sg=await verSig();if(!sg)return;if(!VER.base){VER.base=sg;return}if(sg===VER.base)return;
+    const sheetOpen=$("#sheet")&&!$("#sheet").hidden;const typing=document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if(!S.dirty&&!S.prDirty&&!sheetOpen&&!typing){location.reload();return}
+    if(!$("#newVer")){const d=document.createElement("div");d.id="newVer";d.className="newver";d.innerHTML=`<span>Hay una versión nueva de Line & Maul</span><button class="btn sm primary" id="newVerGo">Actualizar</button>`;document.body.appendChild(d)}}
+  catch(e){}finally{VER.busy=false}}
+window.addEventListener("load",()=>{setTimeout(()=>{VER.at=0;verCheck()},3000)});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){VER.at=0;verCheck()}});
+setInterval(()=>{if(!document.hidden)verCheck()},600000);
+document.addEventListener("click",e=>{if(e.target.id==="newVerGo"){if((S.dirty||S.prDirty)&&!confirm("Tenés cambios sin guardar. ¿Actualizar igual?"))return;location.reload()}});
 /* ---------- notificaciones push ---------- */
 const VAPID_PUBLIC="BAY0kOg2olgVmmQ7FJ0Rtxsm-U_TtaXTIPsLmZ7WaZf0kEK7DsA7uojC0GzvlnSkYZgNn3XNCx3tzfn3dslGGRs";
 const NOTIF_TIPOS=[["abre","Abrió la fecha","Lunes, cuando abre la fecha"],["form","Formaciones confirmadas","Viernes a la noche"],["cierre","Cierra en 2 h","Sábado, solo si te falta el XV o el Prode"],["puntos","Puntos publicados","Cuando se publican los puntos"],["avisos","Novedades de Line & Maul","Avisos especiales, premios y sponsors"]];
