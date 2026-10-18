@@ -122,6 +122,7 @@ textarea{min-height:140px;resize:vertical;font-size:14px;line-height:1.5}
 .pvd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}.pvd>b{font-weight:600}
 .postbtns{display:grid;gap:8px;margin-top:10px}.postbtns .btn{justify-content:flex-start;text-align:left;gap:10px}.postbtns .btn b{color:var(--accent);font-family:var(--display);font-size:20px}
 .newver{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--card,#2a1612);border:1px solid var(--accent);box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:14px}
+button.pdet{appearance:none;border:0;background:none;color:inherit;font:inherit;padding:3px 0;width:100%;text-align:left;cursor:pointer;border-bottom:1px dashed var(--line)}button.pdet:disabled{cursor:default;border-bottom:0}
 .mcard{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:12px;background:var(--chip);border:1px solid var(--line)}.mcard b{font:800 30px/1 var(--display);color:var(--accent)}.mcard span{font-weight:600;font-size:14px}.mcard small{font-size:12px;color:var(--muted)}
 .mbars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}.mbar i{display:block;width:100%;min-height:2px;border-radius:4px 4px 0 0;background:var(--accent)}.mbar span{font-size:11px}.mbar small{font-size:10px;color:var(--muted)}
 .mclubs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.mclubs div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;border-bottom:1px solid var(--line)}
@@ -1341,7 +1342,7 @@ function detailHtml(t,fid,uid){
   if(f&&f.estado==="abierta"&&t!==myTeam()&&!S.isOwner)return `<div class="small muted" style="display:flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Este XV se ve cuando cierre ${esc(f.nombre)}. Así nadie copia.</div>`;
   return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">${Array.from({length:15},(_,i)=>i+1).map(s=>{const pid=e.picks[s];const p=S.plantel[pid];if(!p)return `<div class="small muted">#${s} —</div>`;
     const bd=ROLES.filter(r=>e[r.k]===pid).map(r=>`<span class="rb ${r.k}">${r.b}</span>`).join(" ");
-    return `<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid]):"–"}</b></div>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);return b.length?`<div class="small muted" style="margin-top:6px">Suplentes: ${b.map(p=>esc(surname(p))).join(", ")}</div>`:""})()}`;
+    return `<button class="small row pdet" data-pdet="${esc(pid)}" data-pf="${esc(fid)}" data-cap="${e.cap===pid?1:""}" data-kick="${e.kick===pid?1:""}" ${pub?"":"disabled"} style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid]):"–"}</b></button>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);return b.length?`<div class="small muted" style="margin-top:6px">Suplentes: ${b.map(p=>esc(surname(p))).join(", ")}</div>`:""})()}`;
 }
 $("#view").addEventListener("click",e=>{
   const lg=e.target.closest("[data-liga]");if(lg){S.liga=lg.dataset.liga||null;S.open=null;S.tLimit=100;render();return}
@@ -1358,6 +1359,29 @@ $("#view").addEventListener("keydown",e=>{const op=e.target.closest&&e.target.cl
 /* ---------- JUGADORES ---------- */
 function seasonTotals(){const tot={};for(const pid in S.plantel)tot[pid]={t:0,o:0,c:0,p:0,d:0,a:0,r:0,m:0};
   for(const f of finalFechas()){const st=f.stats||{};for(const pid in st){if(!tot[pid])continue;for(const [k] of STATS)tot[pid][k]+=(+st[pid][k]||0)}}return tot}
+/* desglose de puntos de un jugador: en una fecha (con los roles de ese equipo) o en toda la temporada */
+const STL={t:["try","tries"],o:["try de oro","tries de oro"],c:["conversión","conversiones"],p:["penal","penales"],d:["drop","drops"],a:["amarilla","amarillas"],r:["roja","rojas"],m:["Man of the Match","Man of the Match"]};
+function dgRows(st,isCap,isKick,roles){let base=0,kick=0;const rows=[];const P=S.pts;
+  for(const [k] of STATS){const c=+(st||{})[k]||0;if(!c)continue;const v=c*(+P[k]||0);const lab=k==="m"?"Man of the Match":`${c} ${STL[k][c>1?1:0]}`;
+    if(roles&&KICKS.includes(k)&&k!=="d"&&!isKick){rows.push(`<div class="pdrow"><div class="small">${lab} <span class="muted">· no suma, no era su pateador</span></div><b class="num pdpts muted">0</b></div>`);continue}
+    if(!roles&&KICKS.includes(k)){rows.push(`<div class="pdrow"><div class="small">${lab} <span class="muted">· solo si es tu pateador</span></div><b class="num pdpts muted">${v>0?"+":""}${v}</b></div>`);kick+=v;continue}
+    if(NO_CAP.includes(k))kick+=v;else base+=v;rows.push(`<div class="pdrow"><div class="small">${lab}</div><b class="num pdpts ${v>0?"pos":"neg"}">${v>0?"+":""}${v}</b></div>`)}
+  if(roles&&isCap&&base)rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base>0?"pos":"neg"}">${base>0?"+":""}${base}</b></div>`);
+  return {rows,tot:roles?((isCap?base*2:base)+kick):base,kick}}
+function dgHead(pid,extra){const p=S.plantel[pid];return `<div class="row" style="gap:12px;align-items:center;margin-bottom:10px;flex-wrap:nowrap"><svg viewBox="0 0 64 60" style="width:54px;height:50px;flex:none" aria-hidden="true">${miniKit(p.d)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(p.d)} · ${esc(posNames(p))}</div>${extra?`<div class="small" style="margin-top:3px">${extra}</div>`:""}</div></div>`}
+function openFechaDet(pid,fid,isCap,isKick){const p=S.plantel[pid];const f=S.fechas.find(x=>x.id===fid);if(!p||!f)return;const st=(f.stats||{})[pid]||{};const d=dgRows(st,isCap,isKick,true);
+  const roles=[isCap?`<span class="rb cap">C</span> Capitán`:"",isKick?`<span class="rb kick">P</span> Pateador`:""].filter(Boolean).join(" · ");const r=rivalOf(f,p.d);
+  openInfoSheet(f.nombre,dgHead(pid,[r?"vs "+esc(r):"",roles].filter(Boolean).join(" · "))+`<div style="display:flex;flex-direction:column">${d.rows.length?d.rows.join(""):`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p>`}<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${d.tot}</b></div></div>`)}
+function openJugDet(pid){const p=S.plantel[pid];if(!p)return;const fs=finalFechas();let tot=0,tk=0;const lines=[];const sum={};
+  for(const f of fs){const st=(f.stats||{})[pid];if(!st||!Object.values(st).some(v=>+v))continue;const d=dgRows(st,false,false,false);tot+=d.tot;tk+=d.kick;
+    for(const [k,v] of Object.entries(st))sum[k]=(sum[k]||0)+(+v||0);
+    const det=STATS.map(([k])=>+st[k]?(k==="m"?"MoM":`${+st[k]} ${STL[k][+st[k]>1?1:0]}`):"").filter(Boolean).join(" · ");
+    lines.push(`<div class="pdrow"><div class="small"><b>${esc(f.nombre)}</b><div class="muted">${det}</div></div><b class="num pdpts ${d.tot>0?"pos":d.tot<0?"neg":""}">${d.tot}</b></div>`)}
+  const res=STATS.map(([k])=>sum[k]?`<span class="tag">${sum[k]} ${k==="m"?"MoM":STL[k][sum[k]>1?1:0]}</span>`:"").filter(Boolean).join(" ");
+  openInfoSheet("Temporada",dgHead(pid,`${fs.length} fecha${fs.length===1?"":"s"} con puntos`)+`${res?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${res}</div>`:""}<div style="display:flex;flex-direction:column">${lines.length?lines.reverse().join(""):`<p class="muted" style="margin:0">Todavía no sumó puntos.</p>`}
+    <div class="pdrow pdtot"><div class="small"><b>Total sin patadas</b></div><b class="num pdpts">${tot}</b></div>${tk?`<div class="pdrow"><div class="small muted">Patadas (suman solo si es tu pateador)</div><b class="num pdpts muted">${tk}</b></div>`:""}</div>`)}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-pdet]");if(b&&!b.disabled){e.stopPropagation();openFechaDet(b.dataset.pdet,b.dataset.pf,!!b.dataset.cap,!!b.dataset.kick);return}
+  const j=e.target.closest("[data-jdet]");if(j&&S.tab==="jug"){openJugDet(j.dataset.jdet)}},true);
 function renderJug(){
   const mode=S.jugMode||"puntos";const dv=S.jugDiv||"Todas";const tot=seasonTotals();const P=S.pts;const nf=finalFechas().length;
   let rows=Object.entries(S.plantel).filter(([id,p])=>dv==="Todas"||p.d===dv).map(([id,p])=>{const x=tot[id];
@@ -1369,8 +1393,8 @@ function renderJug(){
     const who=`<td><div style="font-weight:600;white-space:normal">${esc(r.p.n)}</div><div class="small muted">${esc(r.p.d)} · ${posNames(r.p)}</div></td>`;
     const z=v=>v?v:`<span class="muted">0</span>`;
     return mode==="puntos"
-      ?`<tr><td class="rank num">${rank}</td>${who}<td class="r num">${z(r.x.t+r.x.o)}</td><td class="r num">${r.x.a||r.x.r?`<span class="neg">${r.x.a?r.x.a+"A":""}${r.x.a&&r.x.r?" ":""}${r.x.r?r.x.r+"R":""}</span>`:'<span class="muted">–</span>'}</td><td class="r big num">${r.pts}</td></tr>`
-      :`<tr><td class="rank num">${rank}</td>${who}<td class="r num">${z(r.x.c)}</td><td class="r num">${z(r.x.p)}</td><td class="r num">${z(r.x.d)}</td><td class="r big num">${r.kick}</td></tr>`}).join("");
+      ?`<tr class="clk" data-jdet="${esc(r.id)}" tabindex="0"><td class="rank num">${rank}</td>${who}<td class="r num">${z(r.x.t+r.x.o)}</td><td class="r num">${r.x.a||r.x.r?`<span class="neg">${r.x.a?r.x.a+"A":""}${r.x.a&&r.x.r?" ":""}${r.x.r?r.x.r+"R":""}</span>`:'<span class="muted">–</span>'}</td><td class="r big num">${r.pts}</td></tr>`
+      :`<tr class="clk" data-jdet="${esc(r.id)}" tabindex="0"><td class="rank num">${rank}</td>${who}<td class="r num">${z(r.x.c)}</td><td class="r num">${z(r.x.p)}</td><td class="r num">${z(r.x.d)}</td><td class="r big num">${r.kick}</td></tr>`}).join("");
   const head=mode==="puntos"?`<th>#</th><th>Jugador</th><th class="r">Tries</th><th class="r">Tarj.</th><th class="r">Pts</th>`
     :`<th>#</th><th>Jugador</th><th class="r" title="Conversiones">Conv.</th><th class="r" title="Penales">Pen.</th><th class="r">Drops</th><th class="r">Pts</th>`;
   $("#view").innerHTML=`<section class="view">
