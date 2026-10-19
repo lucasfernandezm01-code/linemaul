@@ -13,6 +13,7 @@
 - [ ] Cada prode como juego separado (1A, Córdoba, Tucumán, Litoral)
 - [ ] Logos de los prodes nuevos (Lucas)
 - [ ] Clubes y camisetas de Córdoba, Tucumán y Litoral
+- [ ] Fantasy + Prode Córdoba (Primera UCR): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
 - [ ] Carga automática de resultados para los prodes
 - [ ] Mejorar la estética de los posteos
 
