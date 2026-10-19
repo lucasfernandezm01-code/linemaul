@@ -1433,7 +1433,7 @@ $("#view").addEventListener("click",e=>{
 function renderReglas(){
   $("#view").innerHTML=`<section class="view">
     <div><h2 style="margin-bottom:10px">Cómo se suman puntos</h2>
-    <div class="pts-grid">${STATS.map(([k,n])=>{const v=+S.pts[k]||0;return `<div class="k"><span>${n}</span><b class="num ${v<0?"neg":"pos"}">${v>0?"+":""}${v}</b></div>`}).join("")}<div class="k"><span>Victoria del club</span><b class="num pos">+${VIC_PTS}</b></div><div class="k"><span>Victoria con bonus</span><b class="num pos">+${VICB_PTS}</b></div></div></div>
+    ${(()=>{const tile=([k,n])=>{const v=+S.pts[k]||0;return `<div class="k"><span>${n}</span><b class="num ${v<0?"neg":"pos"}">${v>0?"+":""}${v}</b></div>`};return `<div class="pts-grid">${STATS.filter(([k])=>(+S.pts[k]||0)>=0).map(tile).join("")}<div class="k"><span>Victoria del club</span><b class="num pos">+${VIC_PTS}</b></div><div class="k"><span>Victoria con bonus</span><b class="num pos">+${VICB_PTS}</b></div>${STATS.filter(([k])=>(+S.pts[k]||0)<0).map(tile).join("")}</div>`})()}</div>
     <div class="card"><h3>Tu equipo</h3><ul class="rules">
       <li>Elegís <b>15 titulares</b>, uno por puesto, del 1 al 15. Cada puesto solo acepta jugadores que hayan jugado en esa posición (hay jugadores con más de un puesto).</li>
       <li>Además elegís <b>8 suplentes</b> (del 16 al 23): pilar, hooker, segunda línea, tercera línea, medio scrum, apertura, centro y wing o fullback.</li>
