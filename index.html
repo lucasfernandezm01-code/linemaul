@@ -443,11 +443,11 @@ const KICKS=["c","p","d"];
 function rolePts(e,pid,st){if(!st)return 0;let base=0,kick=0;
   for(const [k] of STATS){const v=(+st[k]||0)*(+S.pts[k]||0);if(NO_CAP.includes(k)){if(e.kick!==pid)continue;kick+=v}else base+=v}
   return (e.cap===pid?base*2:base)+kick}
-/* victoria del club: cada titular cuyo club ganó suma +1 (+2 con punto bonus). No se duplica con el capitán. */
+/* victoria del club: cada titular cuyo club ganó suma +1 (+2 con punto bonus). El capitán lo duplica. */
 const VIC_PTS=1,VICB_PTS=2;
 function clubOfE(e,pid){const z=e&&e.divs&&e.divs[pid];if(z&&DIVS.includes(z))return z;const p=S.plantel[pid];return p?p.d:null}
-function winPts(pid,f,e){if(!f||!f.res)return 0;const c=clubOfE(e,pid);if(!c||f.res[c]!=="G")return 0;return f.bonus&&f.bonus[c]?VICB_PTS:VIC_PTS}
-function winRow(pid,f,e){const v=winPts(pid,f,e);if(!v)return "";const c=clubOfE(e,pid);return `<div class="pdrow"><div class="small">Ganó ${esc(shortClub(c))}${v===VICB_PTS?" con bonus":""}</div><b class="num pdpts pos">+${v}</b></div>`}
+function winPts(pid,f,e){if(!f||!f.res)return 0;const c=clubOfE(e,pid);if(!c||f.res[c]!=="G")return 0;return (f.bonus&&f.bonus[c]?VICB_PTS:VIC_PTS)*(e&&e.cap===pid?2:1)}
+function winRow(pid,f,e){const v=winPts(pid,f,e);if(!v)return "";const c=clubOfE(e,pid);const bon=!!(f.bonus&&f.bonus[c]);const cap=e&&e.cap===pid;return `<div class="pdrow"><div class="small">Ganó ${esc(shortClub(c))}${bon?" con bonus":""}${cap?` <span class="muted">· ×2 capitán</span>`:""}</div><b class="num pdpts pos">+${v}</b></div>`}
 function hcPts(e,f){if(!e||!e.hc||!f||!f.res)return 0;return HC_PTS[f.res[e.hc]]||0}
 /* foto del cierre: si existe cierres/<fecha>, manda esa copia (no editable por los participantes) */
 /* respaldo: si el organizador abre el sitio y una fecha ya cerró sin registro, lo guarda solo */
@@ -1388,7 +1388,7 @@ function dgRows(st,isCap,isKick,roles){let base=0,kick=0;const rows=[];const P=S
   if(roles&&isCap&&base)rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base>0?"pos":"neg"}">${base>0?"+":""}${base}</b></div>`);
   return {rows,tot:roles?((isCap?base*2:base)+kick):base,kick}}
 function dgHead(pid,extra){const p=S.plantel[pid];return `<div class="row" style="gap:12px;align-items:center;margin-bottom:10px;flex-wrap:nowrap"><svg viewBox="0 0 64 60" style="width:54px;height:50px;flex:none" aria-hidden="true">${miniKit(p.d)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(p.d)} · ${esc(posNames(p))}</div>${extra?`<div class="small" style="margin-top:3px">${extra}</div>`:""}</div></div>`}
-function openFechaDet(pid,fid,isCap,isKick,xv){const p=S.plantel[pid];const f=S.fechas.find(x=>x.id===fid);if(!p||!f)return;const st=(f.stats||{})[pid]||{};const d=dgRows(st,isCap,isKick,true);if(xv){const wr=winRow(pid,f,null);if(wr){d.rows.push(wr);d.tot+=winPts(pid,f,null)}}
+function openFechaDet(pid,fid,isCap,isKick,xv){const p=S.plantel[pid];const f=S.fechas.find(x=>x.id===fid);if(!p||!f)return;const st=(f.stats||{})[pid]||{};const d=dgRows(st,isCap,isKick,true);if(xv){const ee={cap:isCap?pid:null};const wr=winRow(pid,f,ee);if(wr){d.rows.push(wr);d.tot+=winPts(pid,f,ee)}}
   const roles=[isCap?`<span class="rb cap">C</span> Capitán`:"",isKick?`<span class="rb kick">P</span> Pateador`:""].filter(Boolean).join(" · ");const r=rivalOf(f,p.d);
   openInfoSheet(f.nombre,dgHead(pid,[r?"vs "+esc(r):"",roles].filter(Boolean).join(" · "))+`<div style="display:flex;flex-direction:column">${d.rows.length?d.rows.join(""):`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p>`}<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${d.tot}</b></div></div>`)}
 function openJugDet(pid){const p=S.plantel[pid];if(!p)return;const fs=finalFechas();let tot=0,tk=0;const lines=[];const sum={};
@@ -1448,7 +1448,7 @@ function renderReglas(){
     </ul></div>
     <div class="card"><h3>Puntos</h3><ul class="rules">
       <li>Suman solo tus 15 titulares y solo lo que hacen en la Primera.</li>
-      <li><b>Victoria del club:</b> cada titular tuyo cuyo club gana suma <b>+1</b>, y <b>+2</b> si gana con punto bonus. El empate no suma y el capitán no lo duplica.</li>
+      <li><b>Victoria del club:</b> cada titular tuyo cuyo club gana suma <b>+1</b>, y <b>+2</b> si gana con punto bonus. El empate no suma. El capitán lo duplica.</li>
       <li><b>Los suplentes no suman nunca</b>, ni siquiera si un titular tuyo no juega: no hay cambios automáticos. Sirven para hacer cambios con tu XV sin gastar transferencias.</li>
       <li><b>Try de oro:</b> si uno de tus jugadores hace un try faltando menos de 5 minutos y ese try define el partido, vale doble (+${+S.pts.o||0} en vez de +${+S.pts.t||0}).</li>
       <li><b>Man of the Match:</b> al final de cada transmisión se elige el jugador del partido. Si está entre tus titulares, suma +${+S.pts.m||0}.</li>
