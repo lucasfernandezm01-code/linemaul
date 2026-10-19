@@ -5,6 +5,8 @@
 
 ## Nuevas funciones
 - [ ] Llave del try (Prode): un jugador por partido; si hace try, +3. Falta decidir valor, si va solo en T14 y el nombre
+- [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
+- [ ] Buzón de sugerencias: ideas, cosas a mejorar, ayuda que puedan brindar; se leen en Panel Admin (necesita SQL nuevo en Supabase)
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
 
 ## Antes de febrero
