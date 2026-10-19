@@ -930,6 +930,7 @@ async function buildCard(o){o=o||{};
   parts.forEach((pt,i)=>{const col=items[i][2];ctx.beginPath();ctx.arc(x+20,fy,20,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.fillStyle="#0d1f45";ctx.textAlign="center";ctx.font=`800 ${pt.b.length>1?18:22}px "Saira Condensed",sans-serif`;ctx.fillText(pt.b,x+20,fy+7);
     ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font='700 30px "Barlow",sans-serif';ctx.fillText(pt.n,x+50,fy+10);x+=pt.w+40});
   if(o.pts!=null){ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(o.pts+" PTS",W-64,160)}else if(!o.draft&&f.estado==="final"){const pts=teamFechaPts({fechas:{[f.id]:S.draft}},f.id);ctx.textAlign="right";ctx.fillStyle="#f2c21a";ctx.font='800 64px "Saira Condensed",sans-serif';ctx.fillText(pts+" PTS",W-64,160)}
+  if(o.note){ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.45)";let nf=19;ctx.font=`500 ${nf}px "Barlow",sans-serif`;while(ctx.measureText(o.note).width>W-80&&nf>13){nf--;ctx.font=`500 ${nf}px "Barlow",sans-serif`}ctx.fillText(o.note,W/2,1262)}
   ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font='italic 700 24px "Saira Condensed",sans-serif';sp2(ctx,o.foot||"ARMÁ TU XV EN LINE & MAUL",W/2,1300,5);
   return c;
 }
@@ -950,10 +951,18 @@ function topReal(stats,n){return Object.entries(stats).filter(([pid])=>S.plantel
 function topObj(obj,n){return Object.entries(obj||{}).filter(([pid])=>S.plantel[pid]).sort((a,b)=>b[1]-a[1]).slice(0,n)}
 function xvDeLaGente(P){const used=new Set(),picks={};for(let sl=1;sl<=15;sl++){const c=topObj((P.byG||{})[SLOT_GROUP[sl]],40).find(([pid])=>!used.has(pid));if(c){picks[sl]=c[0];used.add(c[0])}}
   const cp=topObj(P.cap,1)[0],hc=Object.entries(P.hc||{}).sort((a,b)=>b[1]-a[1])[0];return {picks,cp,hc}}
-function xvIdeal(f){const st=f.stats||{};const cand=Object.keys(st).filter(pid=>S.plantel[pid]).map(pid=>[pid,playerPts(st[pid])]).sort((a,b)=>b[1]-a[1]);const picks={};
+function xvIdeal(f){const st=f.stats||{};const cand=Object.keys(st).filter(pid=>S.plantel[pid]).map(pid=>[pid,playerPts(st[pid])]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);const picks={};
   for(const [pid] of cand){const gs=posList(S.plantel[pid]);const sl=Array.from({length:15},(_,i)=>i+1).find(x=>!picks[x]&&gs.includes(SLOT_GROUP[x]));if(sl)picks[sl]=pid;if(Object.keys(picks).length===15)break}
+  /* puestos sin nadie que sumó: el titular de ese puesto del equipo que ganó por más diferencia */
+  const marg={};for(const m of prPartidos(f,["top14"])){const r=prMarc(f,m.id);if(!r)continue;marg[m.l]=r.l-r.v;marg[m.v]=r.v-r.l}
+  const used=new Set(Object.values(picks));const relleno=[];
+  for(let sl=1;sl<=15;sl++){if(picks[sl])continue;const g=SLOT_GROUP[sl];
+    const c=Object.entries(f.alin||{}).flatMap(([club,m])=>Object.entries(m||{}).filter(([pid,v])=>v==="T"&&S.plantel[pid]&&!used.has(pid)&&posList(S.plantel[pid]).includes(g)).map(([pid])=>[pid,club]))
+      .map(([pid,club])=>({pid,club,pts:playerPts(st[pid]),prim:S.plantel[pid].g===g?1:0,mg:marg[club]!=null?marg[club]:-999}))
+      .sort((a,b)=>(b.pts>=0)-(a.pts>=0)||b.mg-a.mg||b.prim-a.prim||b.pts-a.pts)[0];
+    if(c){picks[sl]=c.pid;used.add(c.pid);relleno.push({sl,club:c.club})}}
   const xv=Object.values(picks);const cap=xv.slice().sort((a,b)=>realPts(st[b])-realPts(st[a]))[0]||null;const kick=xv.slice().sort((a,b)=>kickPts(st[b])-kickPts(st[a]))[0]||null;
-  const d={picks,cap,kick:kick&&kickPts(st[kick])>0?kick:null,hc:null,divs:{}};const slotPts={};let tot=0;for(const [sl,pid] of Object.entries(picks)){const v=rolePts(d,pid,st[pid]);slotPts[sl]=v;tot+=v}return {d,slotPts,tot}}
+  const d={picks,cap,kick:kick&&kickPts(st[kick])>0?kick:null,hc:null,divs:{}};const slotPts={};let tot=0;for(const [sl,pid] of Object.entries(picks)){const v=rolePts(d,pid,st[pid]);slotPts[sl]=v;tot+=v}return {d,slotPts,tot,relleno}}
 /* placa de dos columnas: [{h,rows:[{name,sub,club,val}]}] */
 async function buildTwoCol(o){const {c,ctx,W}=await cardBase(o.eyebrow,o.title,o.sub);const gx=46,gap=28,cw=(W-gx*2-gap)/2;const top=372,rh=82;
   o.cols.forEach((col,ci)=>{const x=gx+ci*(cw+gap);ctx.fillStyle="rgba(255,255,255,.05)";rr(ctx,x,top-6,cw,rh*10+86,22);ctx.fill();
@@ -999,7 +1008,7 @@ function prVotosMatches(f,rows,comp){const by={};for(const r of rows){const m=by
 async function postBuilders(n,f){const fins=finalFechas();const lab=f.nombre;const pc=(a,b)=>b?Math.round(a*100/b)+"%":"–";
   if(n==="1"){const P=await PD_picks([f.id]);const g=xvDeLaGente(P);const cpP=g.cp&&S.plantel[g.cp[0]];const I=xvIdeal(f);const st=f.stats||{};
     return [["xv-de-la-gente",()=>buildCard({draft:{picks:g.picks,cap:g.cp?g.cp[0]:null,hc:g.hc?g.hc[0]:null,divs:{}},team:"EL XV DE LA GENTE",sub:lab,f:{},items:[["C",cpP?surname(cpP)+" · "+pc(g.cp[1],P.teams):"—","#f2c21a"],["HC",g.hc?hcLabel(g.hc[0])+" · "+pc(g.hc[1],P.teams):"—","#c9a8ff"]]})],
-      ["xv-de-la-fecha",()=>{const cP=S.plantel[I.d.cap],kP=S.plantel[I.d.kick];return buildCard({draft:I.d,team:"EL XV DE LA FECHA",sub:lab,f:{},pts:I.tot,slotPts:I.slotPts,foot:"ARMÁ TU XV EN LINE & MAUL",items:[["C",cP?surname(cP)+" · "+rolePts(I.d,I.d.cap,st[I.d.cap]):"—","#f2c21a"],["P",kP?surname(kP)+" · "+kickPts(st[I.d.kick]):"—","#7cc4ff"]]})}]]}
+      ["xv-de-la-fecha",()=>{const cP=S.plantel[I.d.cap],kP=S.plantel[I.d.kick];return buildCard({draft:I.d,team:"EL XV DE LA FECHA",sub:lab,f:{},pts:I.tot,slotPts:I.slotPts,note:I.relleno.length?`* ${I.relleno.length===1?"En el puesto "+I.relleno[0].sl+" nadie sumó":"En los puestos "+I.relleno.map(x=>x.sl).join(", ")+" nadie sumó"}: va el titular de ese puesto del equipo que ganó por más diferencia.`:"",foot:"ARMÁ TU XV EN LINE & MAUL",items:[["C",cP?surname(cP)+" · "+rolePts(I.d,I.d.cap,st[I.d.cap]):"—","#f2c21a"],["P",kP?surname(kP)+" · "+kickPts(st[I.d.kick]):"—","#7cc4ff"]]})}]]}
   if(n==="2"){const rows=await PD_votos(f.id);return COMP_IDS.map(c=>{const ms=prVotosMatches(f,rows,c);return ms.length?["pronosticos-"+c,()=>buildProno({comp:COMP_N[c],sub:lab,matches:ms})]:null}).filter(Boolean)}
   if(n==="3"){const ff=topReal(f.stats||{},10),tt=topReal(sumStats(fins),10);const row=([pid,v,st])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+(realDet(st)?" · "+realDet(st):""),club:p.d,val:v}};
     const Pf=await PD_picks([f.id]),Pt=await PD_picks(fins.map(x=>x.id));const prow=P=>([pid,k])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+" · "+posNames(p),club:p.d,val:pc(k,P.teams)}};
