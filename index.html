@@ -443,6 +443,11 @@ const KICKS=["c","p","d"];
 function rolePts(e,pid,st){if(!st)return 0;let base=0,kick=0;
   for(const [k] of STATS){const v=(+st[k]||0)*(+S.pts[k]||0);if(NO_CAP.includes(k)){if(e.kick!==pid)continue;kick+=v}else base+=v}
   return (e.cap===pid?base*2:base)+kick}
+/* victoria del club: cada titular cuyo club ganó suma +1 (+2 con punto bonus). No se duplica con el capitán. */
+const VIC_PTS=1,VICB_PTS=2;
+function clubOfE(e,pid){const z=e&&e.divs&&e.divs[pid];if(z&&DIVS.includes(z))return z;const p=S.plantel[pid];return p?p.d:null}
+function winPts(pid,f,e){if(!f||!f.res)return 0;const c=clubOfE(e,pid);if(!c||f.res[c]!=="G")return 0;return f.bonus&&f.bonus[c]?VICB_PTS:VIC_PTS}
+function winRow(pid,f,e){const v=winPts(pid,f,e);if(!v)return "";const c=clubOfE(e,pid);return `<div class="pdrow"><div class="small">Ganó ${esc(shortClub(c))}${v===VICB_PTS?" con bonus":""}</div><b class="num pdpts pos">+${v}</b></div>`}
 function hcPts(e,f){if(!e||!e.hc||!f||!f.res)return 0;return HC_PTS[f.res[e.hc]]||0}
 /* foto del cierre: si existe cierres/<fecha>, manda esa copia (no editable por los participantes) */
 /* respaldo: si el organizador abre el sitio y una fecha ya cerró sin registro, lo guarda solo */
@@ -457,7 +462,7 @@ function entryOf(uid,team,fid){const sn=snapOf(fid);if(sn&&uid)return (sn.equipo
 const sig=e=>e?JSON.stringify([e.picks||{},e.cap||null,e.kick||null,e.hc||null]):"";
 function changedAfter(uid,team,fid){const sn=snapOf(fid);if(!sn||!uid)return false;const live=team&&team.fechas&&team.fechas[fid];const snap=(sn.equipos||{})[uid];if(!live&&!snap)return false;return sig(live)!==sig(snap)}
 function teamFechaPts(team,fid,uid){const e=uid?entryOf(uid,team,fid):(team&&team.fechas&&team.fechas[fid]);if(!e||!e.picks)return 0;const f=S.fechas.find(x=>x.id===fid);if(!f)return 0;const st=f.stats||{};let s=hcPts(e,f);
-  for(const slot in e.picks){if(!isXV(slot))continue;const pid=e.picks[slot];if(!pid)continue;s+=rolePts(e,pid,st[pid])}return s}
+  for(const slot in e.picks){if(!isXV(slot))continue;const pid=e.picks[slot];if(!pid)continue;s+=rolePts(e,pid,st[pid])+winPts(pid,f,e)}return s}
 function finalFechas(){return sortedFechas().filter(f=>f.estado==="final")}
 function seasonPlayerPts(pid){let s=0;for(const f of finalFechas())s+=playerPts((f.stats||{})[pid]);return s}
 
@@ -723,7 +728,7 @@ function jersey(num,name,empty,club){
 function slotHtml(s,pid,st,hasStats){
   const p=pid&&S.plantel[pid];
   if(!p)return `<button class="slot empty" data-slot="${s}" aria-label="Elegir ${SLOT_NAME[s]}">${jersey(s,"",true)}<span class="nm">${slotLbl(s)}</span><span class="dv">Elegir</span></button>`;
-  let pt="";if(hasStats){const v=rolePts(S.draft,pid,st[pid]);pt=isXV(s)?`<span class="pt num" data-v="${v}">${v}</span>`:`<span class="ptb num" title="No suma: es suplente">${v}</span>`}
+  let pt="";if(hasStats){const v=rolePts(S.draft,pid,st[pid])+(isXV(s)?winPts(pid,S.fechas.find(x=>x.id===S.fechaSel),S.draft):0);pt=isXV(s)?`<span class="pt num" data-v="${v}">${v}</span>`:`<span class="ptb num" title="No suma: es suplente">${v}</span>`}
   const bd=ROLES.filter(r=>S.draft[r.k]===pid).map(r=>`<span class="rb ${r.k}" title="${r.n}">${r.b}</span>`).join("");
   const drop=S.justPicked===s?" drop":"";
   return `<button class="slot${drop}" data-slot="${s}" aria-label="${esc(SLOT_NAME[s]+": "+p.n)}">${pt}${bd?`<span class="badges">${bd}</span>`:""}${jersey(s,surname(p),false,fdiv(pid))}${matchPlate(S.fechas.find(x=>x.id===S.fechaSel),pid)}</button>`;
@@ -754,7 +759,7 @@ function playerInfo(slot){const pid=S.draft.picks[slot];const p=pid&&S.plantel[p
     if(NO_CAP.includes(k))kick+=v;else base+=v;
     rows.push(`<div class="pdrow"><div class="small">${lab}</div><b class="num pdpts ${v>0?"pos":"neg"}">${v>0?"+":""}${v}</b></div>`)}
   if(isCap&&base)rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base>0?"pos":"neg"}">${base>0?"+":""}${base}</b></div>`);
-  const tot=(isCap?base*2:base)+kick;const tit=alinOf(f,pid)==="T";const r=rivalOf(f,club);
+  let tot=(isCap?base*2:base)+kick;if(isXV(slot)&&pub){const wr=winRow(pid,f,S.draft);if(wr){rows.push(wr);tot+=winPts(pid,f,S.draft)}}const tit=alinOf(f,pid)==="T";const r=rivalOf(f,club);
   const roles=[isCap?`<span class="rb cap">C</span> Capitán`:"",isKick?`<span class="rb kick">P</span> Pateador`:""].filter(Boolean).join(" · ");
   const head=`<div class="row" style="gap:12px;align-items:center;margin-bottom:10px"><svg viewBox="0 0 64 60" style="width:58px;height:54px;flex:none" aria-hidden="true">${miniKit(club)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(club)} · ${esc(posNames(p))}</div><div class="small" style="margin-top:3px">${tit?`<span class="tt-in">T</span> Titular · `:""}${r?"vs "+esc(r):""}${roles?` · ${roles}`:""}</div></div></div>`;
   const body=!isXV(slot)?(!pub?`<p class="muted" style="margin:0">Está entre tus suplentes: sus puntos no cuentan para tu equipo.</p>`:`<p class="small muted" style="margin:0 0 8px">Estuvo entre tus suplentes: lo que hizo se muestra, pero no suma para tu equipo.</p>`+(rows.length?rows.join("")+`<div class="pdrow pdtot"><div class="small"><b>Habría sumado</b></div><b class="num pdpts muted">${tot}</b></div>`:`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p>`)):!pub?`<p class="muted" style="margin:0">Todavía no se publicaron los puntos de esta fecha.</p>`:rows.length?rows.join("")+`<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${tot}</b></div>`:`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p><div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">0</b></div>`;
@@ -962,7 +967,7 @@ function xvIdeal(f){const st=f.stats||{};const cand=Object.keys(st).filter(pid=>
       .sort((a,b)=>(b.pts>=0)-(a.pts>=0)||b.mg-a.mg||b.prim-a.prim||b.pts-a.pts)[0];
     if(c){picks[sl]=c.pid;used.add(c.pid);relleno.push({sl,club:c.club})}}
   const xv=Object.values(picks);const cap=xv.slice().sort((a,b)=>realPts(st[b])-realPts(st[a]))[0]||null;const kick=xv.slice().sort((a,b)=>kickPts(st[b])-kickPts(st[a]))[0]||null;
-  const d={picks,cap,kick:kick&&kickPts(st[kick])>0?kick:null,hc:null,divs:{}};const slotPts={};let tot=0;for(const [sl,pid] of Object.entries(picks)){const v=rolePts(d,pid,st[pid]);slotPts[sl]=v;tot+=v}return {d,slotPts,tot,relleno}}
+  const d={picks,cap,kick:kick&&kickPts(st[kick])>0?kick:null,hc:null,divs:{}};const slotPts={};let tot=0;for(const [sl,pid] of Object.entries(picks)){const v=rolePts(d,pid,st[pid])+winPts(pid,f,d);slotPts[sl]=v;tot+=v}return {d,slotPts,tot,relleno}}
 /* placa de dos columnas: [{h,rows:[{name,sub,club,val}]}] */
 async function buildTwoCol(o){const {c,ctx,W}=await cardBase(o.eyebrow,o.title,o.sub);const gx=46,gap=28,cw=(W-gx*2-gap)/2;const top=372,rh=82;
   o.cols.forEach((col,ci)=>{const x=gx+ci*(cw+gap);ctx.fillStyle="rgba(255,255,255,.05)";rr(ctx,x,top-6,cw,rh*10+86,22);ctx.fill();
@@ -1352,7 +1357,7 @@ function detailHtml(t,fid,uid){
   if(f&&f.estado==="abierta"&&t!==myTeam()&&!S.isOwner)return `<div class="small muted" style="display:flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Este XV se ve cuando cierre ${esc(f.nombre)}. Así nadie copia.</div>`;
   return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px">${Array.from({length:15},(_,i)=>i+1).map(s=>{const pid=e.picks[s];const p=S.plantel[pid];if(!p)return `<div class="small muted">#${s} —</div>`;
     const bd=ROLES.filter(r=>e[r.k]===pid).map(r=>`<span class="rb ${r.k}">${r.b}</span>`).join(" ");
-    return `<button class="small row pdet" data-pdet="${esc(pid)}" data-pf="${esc(fid)}" data-cap="${e.cap===pid?1:""}" data-kick="${e.kick===pid?1:""}" ${pub?"":"disabled"} style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid]):"–"}</b></button>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);const bs=BENCH.filter(x=>S.plantel[e.picks[x]]);return bs.length?`<div class="small muted" style="margin-top:6px">Suplentes (no suman): ${bs.map(x=>{const pid=e.picks[x];const p=S.plantel[pid];return pub?`<button class="pdet" data-pdet="${esc(pid)}" data-pf="${esc(fid)}" style="display:inline;width:auto;padding:0;color:inherit">${esc(surname(p))} <b class="num">${rolePts({},pid,st[pid])}</b></button>`:esc(surname(p))}).join(", ")}</div>`:""})()}`;
+    return `<button class="small row pdet" data-pdet="${esc(pid)}" data-pf="${esc(fid)}" data-xv="1" data-u="${esc(uid||"")}" data-cap="${e.cap===pid?1:""}" data-kick="${e.kick===pid?1:""}" ${pub?"":"disabled"} style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span>#${s} ${esc(p.n)} ${bd}</span><b class="num">${pub?rolePts(e,pid,st[pid])+winPts(pid,f,e):"–"}</b></button>`}).join("")}${e.hc?`<div class="small row" style="justify-content:space-between;flex-wrap:nowrap;gap:6px"><span><span class="rb hc">HC</span> ${coachOf(e.hc)?esc(coachOf(e.hc))+" · ":""}${esc(e.hc)}</span><b class="num">${pub?hcPts(e,f):"–"}</b></div>`:""}</div>${(()=>{const b=BENCH.map(s=>S.plantel[e.picks[s]]).filter(Boolean);const bs=BENCH.filter(x=>S.plantel[e.picks[x]]);return bs.length?`<div class="small muted" style="margin-top:6px">Suplentes (no suman): ${bs.map(x=>{const pid=e.picks[x];const p=S.plantel[pid];return pub?`<button class="pdet" data-pdet="${esc(pid)}" data-pf="${esc(fid)}" style="display:inline;width:auto;padding:0;color:inherit">${esc(surname(p))} <b class="num">${rolePts({},pid,st[pid])}</b></button>`:esc(surname(p))}).join(", ")}</div>`:""})()}`;
 }
 $("#view").addEventListener("click",e=>{
   const lg=e.target.closest("[data-liga]");if(lg){S.liga=lg.dataset.liga||null;S.open=null;S.tLimit=100;render();return}
@@ -1379,7 +1384,7 @@ function dgRows(st,isCap,isKick,roles){let base=0,kick=0;const rows=[];const P=S
   if(roles&&isCap&&base)rows.push(`<div class="pdrow"><div class="small"><span class="rb cap">C</span> Capitán ×2</div><b class="num pdpts ${base>0?"pos":"neg"}">${base>0?"+":""}${base}</b></div>`);
   return {rows,tot:roles?((isCap?base*2:base)+kick):base,kick}}
 function dgHead(pid,extra){const p=S.plantel[pid];return `<div class="row" style="gap:12px;align-items:center;margin-bottom:10px;flex-wrap:nowrap"><svg viewBox="0 0 64 60" style="width:54px;height:50px;flex:none" aria-hidden="true">${miniKit(p.d)}</svg><div style="min-width:0"><div style="font-weight:700;font-size:17px">${esc(p.n)}</div><div class="small muted">${esc(p.d)} · ${esc(posNames(p))}</div>${extra?`<div class="small" style="margin-top:3px">${extra}</div>`:""}</div></div>`}
-function openFechaDet(pid,fid,isCap,isKick){const p=S.plantel[pid];const f=S.fechas.find(x=>x.id===fid);if(!p||!f)return;const st=(f.stats||{})[pid]||{};const d=dgRows(st,isCap,isKick,true);
+function openFechaDet(pid,fid,isCap,isKick,xv){const p=S.plantel[pid];const f=S.fechas.find(x=>x.id===fid);if(!p||!f)return;const st=(f.stats||{})[pid]||{};const d=dgRows(st,isCap,isKick,true);if(xv){const wr=winRow(pid,f,null);if(wr){d.rows.push(wr);d.tot+=winPts(pid,f,null)}}
   const roles=[isCap?`<span class="rb cap">C</span> Capitán`:"",isKick?`<span class="rb kick">P</span> Pateador`:""].filter(Boolean).join(" · ");const r=rivalOf(f,p.d);
   openInfoSheet(f.nombre,dgHead(pid,[r?"vs "+esc(r):"",roles].filter(Boolean).join(" · "))+`<div style="display:flex;flex-direction:column">${d.rows.length?d.rows.join(""):`<p class="muted" style="margin:0">No sumó puntos en esta fecha.</p>`}<div class="pdrow pdtot"><div class="small"><b>Total</b></div><b class="num pdpts">${d.tot}</b></div></div>`)}
 function openJugDet(pid){const p=S.plantel[pid];if(!p)return;const fs=finalFechas();let tot=0,tk=0;const lines=[];const sum={};
@@ -1390,7 +1395,7 @@ function openJugDet(pid){const p=S.plantel[pid];if(!p)return;const fs=finalFecha
   const res=STATS.map(([k])=>sum[k]?`<span class="tag">${sum[k]} ${k==="m"?"MOTM":STL[k][sum[k]>1?1:0]}</span>`:"").filter(Boolean).join(" ");
   openInfoSheet("Temporada",dgHead(pid,`${fs.length} fecha${fs.length===1?"":"s"} con puntos`)+`${res?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${res}</div>`:""}<div style="display:flex;flex-direction:column">${lines.length?lines.reverse().join(""):`<p class="muted" style="margin:0">Todavía no sumó puntos.</p>`}
     <div class="pdrow pdtot"><div class="small"><b>Total sin patadas</b></div><b class="num pdpts">${tot}</b></div>${tk?`<div class="pdrow"><div class="small muted">Patadas (suman solo si es tu pateador)</div><b class="num pdpts muted">${tk}</b></div>`:""}</div>`)}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-pdet]");if(b&&!b.disabled){e.stopPropagation();openFechaDet(b.dataset.pdet,b.dataset.pf,!!b.dataset.cap,!!b.dataset.kick);return}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-pdet]");if(b&&!b.disabled){e.stopPropagation();openFechaDet(b.dataset.pdet,b.dataset.pf,!!b.dataset.cap,!!b.dataset.kick,!!b.dataset.xv);return}
   const j=e.target.closest("[data-jdet]");if(j&&S.tab==="jug"){openJugDet(j.dataset.jdet)}},true);
 function renderJug(){
   const mode=S.jugMode||"puntos";const dv=S.jugDiv||"Todas";const tot=seasonTotals();const P=S.pts;const nf=finalFechas().length;
@@ -1439,6 +1444,7 @@ function renderReglas(){
     </ul></div>
     <div class="card"><h3>Puntos</h3><ul class="rules">
       <li>Suman solo tus 15 titulares y solo lo que hacen en la Primera.</li>
+      <li><b>Victoria del club:</b> cada titular tuyo cuyo club gana suma <b>+1</b>, y <b>+2</b> si gana con punto bonus. El empate no suma y el capitán no lo duplica.</li>
       <li><b>Los suplentes no suman nunca</b>, ni siquiera si un titular tuyo no juega: no hay cambios automáticos. Sirven para hacer cambios con tu XV sin gastar transferencias.</li>
       <li><b>Try de oro:</b> si uno de tus jugadores hace un try faltando menos de 5 minutos y ese try define el partido, vale doble (+${+S.pts.o||0} en vez de +${+S.pts.t||0}).</li>
       <li><b>Man of the Match:</b> al final de cada transmisión se elige el jugador del partido. Si está entre tus titulares, suma +${+S.pts.m||0}.</li>
@@ -1550,7 +1556,7 @@ document.addEventListener("click",async e=>{if(e.target.id!=="mCopy")return;cons
   try{await navigator.clipboard.writeText(txt);toast("Resumen copiado")}catch(err){toast("No se pudo copiar")}});
 /* al publicar (o corregir) una fecha, el admin calcula los puntos de todos y los guarda en la base */
 let _recalc=false,_recalcAgain=false;
-function fechaSig(f){const x=JSON.stringify([f.stats||{},f.res||{},f.marcador||{},f.partidos||[],S.pts,2]);let h=0;for(let i=0;i<x.length;i++)h=(h*31+x.charCodeAt(i))|0;return String(h>>>0)}
+function fechaSig(f){const x=JSON.stringify([f.stats||{},f.res||{},f.bonus||{},f.marcador||{},f.partidos||[],S.pts,3]);let h=0;for(let i=0;i<x.length;i++)h=(h*31+x.charCodeAt(i))|0;return String(h>>>0)}
 async function autoRecalc(){if(!S.isOwner||!sb||!S.ready||!S.fechas.length)return;if(_recalc){_recalcAgain=true;return}_recalc=true;let did=0;
   try{const fins=finalFechas();
     for(const f of S.fechas){if(f.estado!=="final"&&f.calc){await sb.from("puntos").delete().eq("fecha_id",f.id);await sb.from("insignias").delete().eq("fecha_id",f.id);await S.db.doc("fechas/"+f.id).update({calc:null});did++}}
@@ -1907,7 +1913,7 @@ function renderPAdmin0(){
     <label class="f" style="flex:1 1 140px">Competencia<select id="paComp">${PR_COMPS.map(([k,n])=>`<option value="${k}" ${k===comp?"selected":""}>${n}</option>`).join("")}</select></label></div>
     <div class="card"><h3>${esc(COMP_N[comp])} · ${esc(compFecha(f,comp))}</h3>
       ${true?`<label class="f">Nombre de la fecha en ${esc(COMP_N[comp])}<div class="row"><input type="text" id="paCn" maxlength="30" value="${esc((f.cn||{})[comp]||"")}" placeholder="Ej: Fecha 24" style="flex:1 1 140px"><button class="btn sm" id="paCnSave">Guardar</button></div></label>`:""}
-      ${ms.length?`<div class="tbl-wrap"><table><thead><tr><th>Local</th><th class="r">Res.</th><th>Visitante</th><th></th></tr></thead><tbody>${ms.map(m=>{const r=(f.marcador||{})[m.id]||{};return `<tr><td>${esc(m.l)}</td><td class="r" style="white-space:nowrap"><input type="number" inputmode="numeric" min="0" max="200" class="statin num" data-pres="${esc(m.id)}" data-side="l" value="${r.l!=null?r.l:""}" aria-label="Puntos ${esc(m.l)}"> – <input type="number" inputmode="numeric" min="0" max="200" class="statin num" data-pres="${esc(m.id)}" data-side="v" value="${r.v!=null?r.v:""}" aria-label="Puntos ${esc(m.v)}"></td><td>${esc(m.v)}</td><td class="r"><button class="btn sm danger" data-pdel="${esc(m.id)}" aria-label="Quitar partido" title="Quitar">✕</button></td></tr>`}).join("")}</tbody></table></div>`:`<p class="small muted" style="margin:0">Sin partidos todavía.</p>`}
+      ${ms.length?`<div class="tbl-wrap"><table><thead><tr><th>Local</th><th class="r">Res.</th><th>Visitante</th><th></th></tr></thead><tbody>${ms.map(m=>{const r=(f.marcador||{})[m.id]||{};const bon=c=>compOf(m)==="top14"?`<label class="small" style="margin-left:6px;white-space:nowrap;display:inline-flex;gap:3px;align-items:center" title="Ganó con punto bonus"><input type="checkbox" data-pbon="${esc(c)}" ${(f.bonus||{})[c]?"checked":""}>B</label>`:"";return `<tr><td>${esc(m.l)}${bon(m.l)}</td><td class="r" style="white-space:nowrap"><input type="number" inputmode="numeric" min="0" max="200" class="statin num" data-pres="${esc(m.id)}" data-side="l" value="${r.l!=null?r.l:""}" aria-label="Puntos ${esc(m.l)}"> – <input type="number" inputmode="numeric" min="0" max="200" class="statin num" data-pres="${esc(m.id)}" data-side="v" value="${r.v!=null?r.v:""}" aria-label="Puntos ${esc(m.v)}"></td><td>${esc(m.v)}${bon(m.v)}</td><td class="r"><button class="btn sm danger" data-pdel="${esc(m.id)}" aria-label="Quitar partido" title="Quitar">✕</button></td></tr>`}).join("")}</tbody></table></div>`:`<p class="small muted" style="margin:0">Sin partidos todavía.</p>`}
       <div class="row"><select id="paL" style="flex:1 1 140px"><option value="">Local…</option>${opt("")}</select><select id="paV" style="flex:1 1 140px"><option value="">Visitante…</option>${opt("")}</select><button class="btn primary" id="paAdd">Agregar</button></div>
       <div class="row"><button class="btn primary" id="paSaveRes">Guardar resultados</button><span class="small muted">${comp==="top14"?"Al guardar se completa solo el resultado del Head Coach del Fantasy. ":""}Para que sumen, publicá la fecha en Fechas → Fechas y horarios.</span></div>
     </div></section>`;
@@ -1926,7 +1932,8 @@ $("#view").addEventListener("click",async e=>{
     for(const m of prPartidos(f,[comp])){const li=document.querySelector(`[data-pres="${CSS.escape(m.id)}"][data-side="l"]`),vi=document.querySelector(`[data-pres="${CSS.escape(m.id)}"][data-side="v"]`);
       const l=li&&li.value!==""?Math.max(0,parseInt(li.value,10)||0):null,v=vi&&vi.value!==""?Math.max(0,parseInt(vi.value,10)||0):null;
       if(l!=null&&v!=null){mc[m.id]={l,v};n++;if(comp==="top14"){res[m.l]=l>v?"G":l<v?"P":"E";res[m.v]=v>l?"G":v<l?"P":"E"}}else delete mc[m.id]}
-    await S.db.doc("fechas/"+f.id).update({marcador:mc,res});toast(`Resultados guardados (${n})`);return}
+    const bonus=Object.assign({},f.bonus||{});for(const m of prPartidos(f,[comp]))for(const c of [m.l,m.v]){const el=document.querySelector(`[data-pbon="${CSS.escape(c)}"]`);if(!el)continue;if(el.checked&&res[c]==="G")bonus[c]=true;else delete bonus[c]}
+    await S.db.doc("fechas/"+f.id).update({marcador:mc,res,bonus});toast(`Resultados guardados (${n})`);return}
   }catch(err){toast("No se pudo guardar. Probá de nuevo.")}
 });
 /* ==================== fin PRODE ==================== */
