@@ -1016,7 +1016,7 @@ async function postBuilders(n,f){const fins=finalFechas();const lab=f.nombre;con
       ["mas-elegidos",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"LOS MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cnt,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cnt,10).map(prow(Pt))}]})],
       ["capitanes",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"CAPITANES MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cap,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cap,10).map(prow(Pt))}]})]]}
   if(n==="4"){const games=[["Fantasy",["dt"]],...COMP_IDS.filter(c=>prFechas().some(x=>prPartidos(x,[c]).length)).map(c=>["Prode "+COMP_N[c],[c]])];
-    const mk=async fid=>Promise.all(games.map(async([h,j])=>{const rows=await PD_top(j,fid);return {h,rows:rows.map(r=>j[0]==="dt"?{name:r.equipo||r.nombre||"—",sub:[r.nombre,r.club].filter(Boolean).join(" · "),val:r.pts}:{name:r.nombre||"—",sub:r.club||"",val:r.pts})}}));
+    const mk=async fid=>Promise.all(games.map(async([h,j])=>{const rows=await PD_top(j,fid);return {h,rows:rows.map(r=>j[0]==="dt"?{name:r.equipo||r.nombre||"—",sub:[r.nombre,r.club].filter(x=>x&&x!=="Otro").join(" · "),val:r.pts}:{name:r.nombre||"—",sub:r.club&&r.club!=="Otro"?r.club:"",val:r.pts})}}));
     const bf=await mk(f.id),bg=await mk(null);
     return [["top-5-fecha",()=>buildBlocks({eyebrow:"TOP 5",title:"LOS MEJORES DE LA FECHA",sub:lab,blocks:bf})],["top-5-general",()=>buildBlocks({eyebrow:"TOP 5",title:"TABLA GENERAL",sub:"Después de "+lab,blocks:bg})]]}
   return []}
