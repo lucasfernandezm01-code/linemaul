@@ -747,7 +747,7 @@ function confirmLeave(){toast("Tenés cambios sin guardar en esta fecha. Guardal
 /* hoja de selección */
 let sheetSlot=null,sheetQ="";
 /* info de insignias y desglose de puntos de un jugador en fecha cerrada */
-const BADGE_INFO={cap:["Capitán","Suma doble todo: tries, try de oro, drops, Man of the Match y también las tarjetas. Las conversiones y penales no se duplican."],kick:["Pateador","Solo las conversiones y penales de tu pateador suman puntos. Las patadas del resto de tu XV no cuentan. Los drops suman para cualquiera."],T:["Titular","Está confirmado entre los 15 titulares de su club en esta fecha."]};
+const BADGE_INFO={cap:["Capitán","Suma doble todo: tries, try de oro, drops, Man of the Match, la victoria de su club y también las tarjetas. Las conversiones y penales no se duplican."],kick:["Pateador","Solo las conversiones y penales de tu pateador suman puntos. Las patadas del resto de tu XV no cuentan. Los drops suman para cualquiera."],T:["Titular","Está confirmado entre los 15 titulares de su club en esta fecha."]};
 const ST_N={t:["try","tries"],o:["try de oro","tries de oro"],m:["Man of the Match","Man of the Match"],c:["conversión","conversiones"],p:["penal","penales"],d:["drop","drops"],a:["amarilla","amarillas"],r:["roja","rojas"]};
 function openInfoSheet(title,html){const el=$("#sheet");el.hidden=false;sheetRole="info";sheetSlot=null;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><div class="row" style="justify-content:space-between"><h2>${esc(title)}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div></div><div class="list" style="padding:14px 16px 18px">${html}</div></div></div>`}
@@ -1433,7 +1433,7 @@ $("#view").addEventListener("click",e=>{
 function renderReglas(){
   $("#view").innerHTML=`<section class="view">
     <div><h2 style="margin-bottom:10px">Cómo se suman puntos</h2>
-    <div class="pts-grid">${STATS.map(([k,n])=>{const v=+S.pts[k]||0;return `<div class="k"><span>${n}</span><b class="num ${v<0?"neg":"pos"}">${v>0?"+":""}${v}</b></div>`}).join("")}</div></div>
+    <div class="pts-grid">${STATS.map(([k,n])=>{const v=+S.pts[k]||0;return `<div class="k"><span>${n}</span><b class="num ${v<0?"neg":"pos"}">${v>0?"+":""}${v}</b></div>`}).join("")}<div class="k"><span>Victoria del club</span><b class="num pos">+${VIC_PTS}</b></div><div class="k"><span>Victoria con bonus</span><b class="num pos">+${VICB_PTS}</b></div></div></div>
     <div class="card"><h3>Tu equipo</h3><ul class="rules">
       <li>Elegís <b>15 titulares</b>, uno por puesto, del 1 al 15. Cada puesto solo acepta jugadores que hayan jugado en esa posición (hay jugadores con más de un puesto).</li>
       <li>Además elegís <b>8 suplentes</b> (del 16 al 23): pilar, hooker, segunda línea, tercera línea, medio scrum, apertura, centro y wing o fullback.</li>
@@ -1442,7 +1442,7 @@ function renderReglas(){
     </ul></div>
     <div class="card"><h3>Roles</h3><ul class="rules">
       <li>Elegís capitán y pateador entre tus 15 titulares (pueden ser el mismo jugador) y un Head Coach.</li>
-      <li><span class="rb cap">C</span> <b>Capitán:</b> suma doble todo: tries, try de oro, drops, Man of the Match y también las tarjetas. Las conversiones y penales no se duplican.</li>
+      <li><span class="rb cap">C</span> <b>Capitán:</b> suma doble todo: tries, try de oro, drops, Man of the Match, la victoria de su club y también las tarjetas. Las conversiones y penales no se duplican.</li>
       <li><span class="rb kick">P</span> <b>Pateador:</b> solo sus conversiones y penales suman. Las del resto no cuentan. Los drops suman para cualquiera.</li>
       <li><span class="rb hc">HC</span> <b>Head Coach:</b> elegís el entrenador de uno de los clubes del T14. Si su club gana, +3. Si pierde, −3. El empate no suma.</li>
     </ul></div>
