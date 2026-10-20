@@ -1,7 +1,4 @@
-# Line & Maul · lista de pendientes (actualizada 18/10/2026)
-
-## Mañana
-- [ ] Mirar juntos "Head Coach URBA" (v0-urbatop14fantasy.vercel.app) desde la compu y ver qué mejorar para ganarle
+# Line & Maul · lista de pendientes (actualizada 20/10/2026)
 
 ## Nuevas funciones
 - [ ] Llave del try (Prode): un jugador por partido; si hace try, +3. Falta decidir valor, si va solo en T14 y el nombre
@@ -36,6 +33,8 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Comparación con Head Coach URBA
+- [x] Estética v2 en todo el sitio (cards premium, pestañas, títulos, paleta) y camisetas en "elegir jugador"
 - [x] Victoria del club (+1 / +2 con bonus, el capitán la duplica)
 - [x] 4 posteos para redes (9 placas) y placas de ejemplo
 - [x] Desglose de puntos (Tabla y Jugadores) y puntos de suplentes en gris
