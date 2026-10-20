@@ -377,6 +377,11 @@ ul.rules{gap:9px}
 .savebar{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top-color:var(--line2);padding-top:12px}
 .toast{border-radius:12px;padding:10px 16px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
 .newver{border-radius:16px;padding:12px 14px}
+.pkl{display:flex;align-items:center;gap:12px;min-width:0}
+.pkit{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--line)}
+.pkit svg{width:32px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.pkn{font-weight:600}
+.sheet .list .pick{border-bottom:1px solid var(--line);border-radius:0;padding:10px 6px}.sheet .list .pick.sel,.sheet .list .pick:hover:not(:disabled){border-radius:14px}
 /* inicio */
 .hgame{border-radius:22px;padding:18px 16px 18px 14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 18px 38px -14px rgba(0,0,0,.65)}
 #home .hgames{gap:14px}
@@ -861,7 +866,7 @@ function renderRoleSheet(){
   const other=null;
   const items=Array.from({length:15},(_,i)=>i+1).filter(s=>S.plantel[S.draft.picks[s]]).map(s=>{const id=S.draft.picks[s];const p=S.plantel[id];
     const dis=!editable||(other===id);const why="";
-    return `<button class="pick${id===cur?" sel":""}" data-role-pick="${esc(id)}" ${dis?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0"><span>#${s} ${esc(p.n)}</span>${why?`<span class="why">${why}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap">${id===cur?`<span class="tag" style="background:var(--accent);color:var(--accent-fg)">Elegido</span>`:""}<span class="tag">${esc(p.d)}</span></span></button>`}).join("");
+    return `<button class="pick${id===cur?" sel":""}" data-role-pick="${esc(id)}" ${dis?"disabled":""}><span class="pkl"><span class="pkit"><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(p.d)}</svg></span><span style="display:flex;flex-direction:column;min-width:0"><span class="pkn">#${s} ${esc(p.n)}</span>${why?`<span class="why">${why}</span>`:""}</span></span><span class="row" style="gap:6px;flex-wrap:nowrap">${id===cur?`<span class="tag" style="background:var(--accent);color:var(--accent-fg)">Elegido</span>`:""}<span class="tag">${esc(p.d)}</span></span></button>`}).join("");
   const el=$("#sheet");el.hidden=false;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Elegir ${r.n}">
     <div class="hd"><div class="row" style="justify-content:space-between"><h2>${r.n}</h2><button class="btn sm" id="closeSheet">Cerrar</button></div><div class="small muted">${r.d}${cur&&editable?" Tocá al elegido para sacarlo.":""}</div></div>
@@ -1244,7 +1249,7 @@ function renderSheet(){
   const curN=cur&&S.plantel[cur]?esc(surname(S.plantel[cur])):"";
   const swapHtml=swaps.length?`<div class="swaps"><div class="small muted" style="padding:2px 4px 6px">Tus jugadores que pueden jugar acá · no gasta transferencias</div>${swaps.map(x=>{const p=S.plantel[x.po];
     const note=x.mode==="block"?(x.b?`Para moverlo, primero liberá el #${x.b} o quitá a ${curN}`:`Para moverlo, primero quitá a ${curN}`):x.mode==="bench"?`${curN} baja al banco (#${x.b})`:x.mode==="swap"?`${curN} pasa al #${x.o}`:"";
-    return `<button class="pick" data-swap="${x.o}" ${x.mode==="block"?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>#${x.o} ${esc(p.n)}${isXV(x.o)?"":` <span class="muted small">(suplente)</span>`}</span>${note?`<span class="why">${note}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(fdiv(x.po)))}</span><span class="tag" style="background:var(--accent);color:var(--accent-fg)">⇅ ${x.mode==="swap"?"Cambiar":"Mover acá"}</span></span></button>`}).join("")}</div>`:"";
+    return `<button class="pick" data-swap="${x.o}" ${x.mode==="block"?"disabled":""}><span class="pkl"><span class="pkit"><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(fdiv(x.po))}</svg></span><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span class="pkn">#${x.o} ${esc(p.n)}${isXV(x.o)?"":` <span class="muted small">(suplente)</span>`}</span>${note?`<span class="why">${note}</span>`:""}</span></span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(fdiv(x.po)))}</span><span class="tag" style="background:var(--accent);color:var(--accent-fg)">⇅ ${x.mode==="swap"?"Cambiar":"Mover acá"}</span></span></button>`}).join("")}</div>`:"";
   const q=norm(sheetQ);
   const aOrd=id=>{const a=alinOf(f,id);return a?ALIN_ORD[a]:3};
   const list=Object.entries(S.plantel).filter(([id,p])=>posList(p).some(x=>gs.includes(x))&&(!q||norm(p.n).includes(q)||norm(p.d).includes(q)))
@@ -1257,7 +1262,7 @@ function renderSheet(){
     else if(cnt[p.d]>=maxOf(f)&&!(curP&&fdiv(cur)===p.d)){why=`Ya tenés ${maxOf(f)} de ${p.d}`;dis=true}
     else if(sinCambios&&!ci.prev.has(id)){why=`Ya usaste las ${ci.max} transferencias de la fecha`;dis=true}
     const sp=seasonPlayerPts(id);
-    return `<button class="pick${id===cur?" sel":""}" data-pick="${esc(id)}" ${dis||!editable?"disabled":""}><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span>${esc(p.n)}</span>${(()=>{const t=alinOf(f,id)==="T",rv=rivalOf(f,p.d);return t||rv?`<span class="row" style="gap:8px;flex-wrap:nowrap;align-items:center">${t?alinTag("T",false):""}${rv?`<span class="small muted" style="white-space:nowrap">vs ${esc(shortClub(rv))}</span>`:""}</span>`:""})()}${why?`<span class="why">${why}</span>`:""}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(p.d))}</span><span class="tag num" title="Puntos en la temporada">${sp} pts</span></span></button>`}).join("");
+    return `<button class="pick${id===cur?" sel":""}" data-pick="${esc(id)}" ${dis||!editable?"disabled":""}><span class="pkl"><span class="pkit"><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(p.d)}</svg></span><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span class="pkn">${esc(p.n)}</span>${(()=>{const t=alinOf(f,id)==="T",rv=rivalOf(f,p.d);return t||rv?`<span class="row" style="gap:8px;flex-wrap:nowrap;align-items:center">${t?alinTag("T",false):""}${rv?`<span class="small muted" style="white-space:nowrap">vs ${esc(shortClub(rv))}</span>`:""}</span>`:""})()}${why?`<span class="why">${why}</span>`:""}</span></span><span class="row" style="gap:6px;flex-wrap:nowrap"><span class="tag">${esc(shortClub(p.d))}</span><span class="tag num" title="Puntos en la temporada">${sp} pts</span></span></button>`}).join("");
   const el=$("#sheet");el.hidden=false;
   el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Elegir ${SLOT_NAME[slot]}">
     <div class="hd">
