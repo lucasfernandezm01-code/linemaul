@@ -382,6 +382,14 @@ ul.rules{gap:9px}
 .pkit svg{width:32px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
 .pkn{font-weight:600}
 .sheet .list .pick{border-bottom:1px solid var(--line);border-radius:0;padding:10px 6px}.sheet .list .pick.sel,.sheet .list .pick:hover:not(:disabled){border-radius:14px}
+.llave{appearance:none;display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;border-radius:14px;border:1px dashed color-mix(in srgb,var(--accent) 55%,transparent);background:rgba(242,194,26,.05);color:var(--fg);font-family:var(--body);cursor:pointer}
+.llave.set{border-style:solid;background:rgba(242,194,26,.09)}.llave:disabled{cursor:default}
+.llave .lk{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-fg)}
+.llave .lt{flex:1;display:flex;flex-direction:column;min-width:0}.llave .lt small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}.llave .lt b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.llave .lgo{color:var(--accent);font-size:24px;line-height:1}.llave .pkit.sm{width:34px;height:34px;border-radius:10px}.llave .pkit.sm svg{width:26px;height:24px}
+.llave.res{border-style:solid;border-color:var(--line);background:rgba(255,255,255,.04);cursor:default}.llave.res .lk{background:var(--chip);color:var(--muted)}.llave.res.ok{border-color:var(--good)}.llave.res.ok .lk{background:var(--good);color:#06301a}
+.llave .lr{font-size:12px;color:var(--muted)}.llave.ok .lr{color:var(--good)}.llave .lp{font:800 22px var(--display);flex:none}.llave.ok .lp{color:var(--good)}
+.llg{display:flex;align-items:center;gap:10px;padding:14px 6px 6px;font-family:var(--display);font-size:18px;text-transform:uppercase;font-style:italic}
 /* inicio */
 .hgame{border-radius:22px;padding:18px 16px 18px 14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 18px 38px -14px rgba(0,0,0,.65)}
 #home .hgames{gap:14px}
@@ -1108,7 +1116,7 @@ async function postBuilders(n,f){const fins=finalFechas();const lab=f.nombre;con
     return [["mejores-jugadores",()=>buildTwoCol({eyebrow:"FANTASY RUGBY · SIN PATADAS",title:"LOS MEJORES",sub:lab,cols:[{h:"La fecha",rows:ff.map(row)},{h:"La temporada",rows:tt.map(row)}],foot:"PUNTOS LINE & MAUL · TRIES, TRY DE ORO, MOTM Y TARJETAS"})],
       ["mas-elegidos",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"LOS MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cnt,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cnt,10).map(prow(Pt))}]})],
       ["capitanes",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"CAPITANES MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cap,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cap,10).map(prow(Pt))}]})]]}
-  if(n==="4"){const games=[["Fantasy",["dt"]],...COMP_IDS.filter(c=>prFechas().some(x=>prPartidos(x,[c]).length)).map(c=>["Prode "+COMP_N[c],[c]])];
+  if(n==="4"){const games=[["Fantasy",["dt"]],...COMP_IDS.filter(c=>prFechas().some(x=>prPartidos(x,[c]).length)).map(c=>["Prode "+COMP_N[c],tablaJuegos([c],null)])];
     const mk=async fid=>Promise.all(games.map(async([h,j])=>{const rows=await PD_top(j,fid);return {h,rows:rows.map(r=>j[0]==="dt"?{name:r.equipo||r.nombre||"—",sub:[r.nombre,r.club].filter(x=>x&&x!=="Otro").join(" · "),val:r.pts}:{name:r.nombre||"—",sub:r.club&&r.club!=="Otro"?r.club:"",val:r.pts})}}));
     const bf=await mk(f.id),bg=await mk(null);
     return [["top-5-fecha",()=>buildBlocks({eyebrow:"TOP 5",title:"LOS MEJORES DE LA FECHA",sub:lab,blocks:bf})],["top-5-general",()=>buildBlocks({eyebrow:"TOP 5",title:"TABLA GENERAL",sub:"Después de "+lab,blocks:bg})]]}
@@ -1217,7 +1225,7 @@ function openLigaSheet(){const el=$("#sheet");el.hidden=false;sheetRole="liga";
     <div class="hd"><div class="row" style="justify-content:space-between"><h2>Torneo privado</h2><button class="btn sm" id="closeSheet">Cerrar</button></div><div class="small muted">${S.game==="prode"?"Una tabla aparte del Prode solo con tus amigos o tu grupo. Se usan los mismos pronósticos y puntos.":"Una tabla aparte del Fantasy solo con tus amigos o tu grupo. Se usa el mismo XV y los mismos puntos."}</div></div>
     <div class="list" style="padding:16px;display:flex;flex-direction:column;gap:18px">
       <div class="card"><h3>Unirme con un código</h3><div class="row"><input type="text" id="joinCode" maxlength="6" placeholder="Ej: K7P2QX" autocapitalize="characters" autocomplete="off" style="flex:1 1 140px;text-transform:uppercase;letter-spacing:.2em"><button class="btn primary" id="doJoin">Unirme</button></div></div>
-      <div class="card"><h3>Crear uno nuevo</h3><div class="row"><input type="text" id="newLiga" maxlength="30" placeholder="Ej: Los del asado" style="flex:1 1 180px"><button class="btn primary" id="doCreate">Crear</button></div>${S.game==="prode"?`<div><b class="small">¿Qué competencias suman?</b><div class="row" style="gap:12px;margin-top:6px">${PR_COMPS.map(([k,n])=>`<label class="row" style="gap:6px;flex-wrap:nowrap;font-weight:600"><input type="checkbox" data-lcomp="${k}" checked style="width:20px;height:20px;accent-color:var(--accent)">${n}</label>`).join("")}</div><p class="small muted" style="margin:6px 0 0">Quedan fijas desde que creás el torneo. Si después querés otras, creá un torneo nuevo.</p></div>`:""}</div>
+      <div class="card"><h3>Crear uno nuevo</h3><div class="row"><input type="text" id="newLiga" maxlength="30" placeholder="Ej: Los del asado" style="flex:1 1 180px"><button class="btn primary" id="doCreate">Crear</button></div>${S.game==="prode"?`<div><b class="small">¿Qué competencias suman?</b><div class="row" style="gap:12px;margin-top:6px">${PR_COMPS.map(([k,n])=>`<label class="row" style="gap:6px;flex-wrap:nowrap;font-weight:600"><input type="checkbox" data-lcomp="${k}" checked style="width:20px;height:20px;accent-color:var(--accent)">${n}</label>`).join("")}</div><label class="row" style="gap:8px;flex-wrap:nowrap;font-weight:600;margin-top:12px"><input type="checkbox" id="lLlave" checked style="width:20px;height:20px;accent-color:var(--accent)">Jugar con Llave del try (T14)</label><p class="small muted" style="margin:6px 0 0">Quedan fijas desde que creás el torneo. Si después querés otras, creá un torneo nuevo.</p></div>`:""}</div>
     </div></div></div>`}
 $("#sheet").addEventListener("click",async e=>{
   if(e.target.id==="doJoin"){const code=($("#joinCode").value||"").trim().toUpperCase();if(!code){toast("Escribí el código");return}
@@ -1227,7 +1235,7 @@ $("#sheet").addEventListener("click",async e=>{
     const mine=myLigas();if(mine.includes(code)){closeSheet();S.liga=code;render();return}
     try{await setLigas([...mine,code]);closeSheet();S.liga=code;S.tab=S.game==="prode"?"ptabla":"tabla";toast("Entraste a "+S.ligas[code].nombre);render()}catch(err){toast("No se pudo unir. Probá de nuevo.")}return}
   if(e.target.id==="doCreate"){const nombre=($("#newLiga").value||"").trim().slice(0,30);if(!nombre){toast("Ponele un nombre");return}
-    let comps=null;if(S.game==="prode"){comps=[...document.querySelectorAll("[data-lcomp]")].filter(x=>x.checked).map(x=>x.dataset.lcomp);if(!comps.length){toast("Elegí al menos una competencia");return}}
+    let comps=null;if(S.game==="prode"){comps=[...document.querySelectorAll("[data-lcomp]")].filter(x=>x.checked).map(x=>x.dataset.lcomp);if(!comps.length){toast("Elegí al menos una competencia");return}if(comps.includes(LLAVE_COMP)&&$("#lLlave")&&!$("#lLlave").checked)comps.push(SIN_LLAVE)}
     const code=newCode();const mineDoc=S.ligasOwn||{};const torneos=Object.assign({},mineDoc,{[code]:Object.assign({nombre,juego:S.game},comps?{comps}:{})});
     try{await S.db.doc("ligas/"+S.uid).set({torneos});S.ligas[code]={nombre,owner:S.uid,juego:S.game,comps};await setLigas([...myLigas(),code]);closeSheet();S.liga=code;S.tab=S.game==="prode"?"ptabla":"tabla";toast("Torneo creado. Código: "+code);render()}catch(err){toast("No se pudo crear. Probá de nuevo.")}return}
 });
@@ -1658,7 +1666,8 @@ async function recalcFecha(f){const rows=[];
   for(const r of eq){const e=r.data;if(!e||!e.picks||!Object.values(e.picks).some(Boolean))continue;const ex={};if(e.cap&&S.plantel[e.cap])ex.cap=playerPts(st[e.cap]);
     rows.push({user_id:r.user_id,juego:"dt",fecha_id:f.id,pts:teamFechaPts({fechas:{[f.id]:e}},f.id),extra:ex})}
   const pr=await sbAll("prode","user_id,data",q=>q.eq("fecha_id",f.id));const saved=S.prode;S.prode={};pr.forEach(r=>{S.prode[r.user_id]={fechas:{[f.id]:r.data||{}}}});
-  try{for(const c of COMP_IDS){const ms=prPartidos(f,[c]);if(!ms.length)continue;for(const r of pr){const e=r.data||{};if(!ms.some(m=>e[m.id]&&e[m.id].w))continue;const x=prFechaPts(r.user_id,f,[c]);rows.push({user_id:r.user_id,juego:c,fecha_id:f.id,pts:x.pts,extra:x.plenos.length?{pl:x.plenos.length}:{}})}}}
+  try{for(const c of COMP_IDS){const ms=prPartidos(f,[c]);if(!ms.length)continue;for(const r of pr){const e=r.data||{};if(!ms.some(m=>e[m.id]&&e[m.id].w))continue;const x=prFechaPts(r.user_id,f,[c],true);rows.push({user_id:r.user_id,juego:c,fecha_id:f.id,pts:x.pts,extra:x.plenos.length?{pl:x.plenos.length}:{}})}}
+    if(prPartidos(f,[LLAVE_COMP]).length)for(const r of pr){const k=prFechaPts(r.user_id,f,[LLAVE_COMP]).llave;if(k>0)rows.push({user_id:r.user_id,juego:"llave",fecha_id:f.id,pts:k,extra:{}})}}
   finally{S.prode=saved}
   let d=await sb.from("puntos").delete().eq("fecha_id",f.id);if(d.error)throw d.error;
   for(let i=0;i<rows.length;i+=500){const r=await sb.from("puntos").insert(rows.slice(i,i+500));if(r.error)throw r.error}
@@ -1786,6 +1795,11 @@ $("#view").addEventListener("input",e=>{
 const PR_EXACTO=5,PR_CERCA=3,PR_MEDIO=2,PR_GANADOR=1,PR_EMPATE=8,PR_PLENO=5;
 const PR_COMPS=[["top14","T14"],["a","1A"]];
 const COMP_N=Object.fromEntries(PR_COMPS);const COMP_IDS=PR_COMPS.map(c=>c[0]);
+/* Llave del try: solo T14. En cada partido elegís un jugador de cualquiera de los dos equipos; si hace try, +1.
+   Se guarda como juego "llave" en puntos. La tabla general la suma; un torneo privado puede jugarse sin llave (marca "sinllave" en comps). */
+const PR_LLAVE=1,LLAVE_COMP="top14",SIN_LLAVE="sinllave";
+function sinLlaveL(L){return !!(L&&Array.isArray(L.comps)&&L.comps.includes(SIN_LLAVE))}
+function tablaJuegos(comps,L){return comps.includes(LLAVE_COMP)&&!sinLlaveL(L)?comps.concat("llave"):comps}
 const PRIMERA_A=["Champagnat","Curupaytí","Deportiva Francesa","GEBA","Hurling","Lomas Athletic","Olivos","Pucará","Pueyrredón","San Albano","San Andrés","San Cirano","San Fernando","Universitario de La Plata"];
 const COMP_CLUBS={top14:DIVS,a:PRIMERA_A};
 Object.assign(SHORT,{"Universitario de La Plata":"Univ. La Plata","Deportiva Francesa":"Dep. Francesa","Lomas Athletic":"Lomas"});
@@ -1801,12 +1815,17 @@ function prPts(p,r){if(!p||!p.w||!r)return null;const diff=r.l-r.v;
   if(p.w==="E")return diff===0?PR_EMPATE:0;if(diff===0)return 0;
   const win=diff>0?"L":"V";if(p.w!==win)return 0;if(!(+p.d>0))return PR_GANADOR;const e=prErr(p,r);
   return e===0?PR_EXACTO:e<=5?PR_CERCA:e<=10?PR_MEDIO:PR_GANADOR}
+function hasLlave(m){return compOf(m)===LLAVE_COMP}
+/* null = sin elegir o sin resultado; si no, los puntos (PR_LLAVE o 0) */
+function llavePts(f,m,p){if(!p||!p.k||!hasLlave(m)||!prMarc(f,m.id))return null;const st=(f.stats||{})[p.k];return st&&+st.t>0?PR_LLAVE:0}
+const KEY_SVG=`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 12h9M18 12v3.5M21 12v2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 function prSnap(fid){const sn=snapOf(fid);return sn&&sn.prode?sn.prode:null}
 function prEntry(uid,fid){const sn=prSnap(fid);if(sn&&uid)return sn[uid]||null;const d=S.prode[uid];return d&&d.fechas?d.fechas[fid]||null:null}
 /* puntos de uid en la fecha f sumando las competencias pedidas; el pleno es por competencia */
-function prFechaPts(uid,f,comps){comps=comps||COMP_IDS;const e=prEntry(uid,f.id);const out={pts:0,plenos:[],det:{}};if(!e)return out;
+function prFechaPts(uid,f,comps,sinLlave){comps=comps||COMP_IDS;const e=prEntry(uid,f.id);const out={pts:0,plenos:[],det:{},llave:0};if(!e)return out;
   for(const c of comps){const ms=prPartidos(f,[c]);if(!ms.length)continue;let ok=0,withRes=0;
-    for(const m of ms){const r=prMarc(f,m.id);if(!r)continue;withRes++;const p=prPts(e[m.id],r);out.det[m.id]=p;if(p)out.pts+=p;if(p>0)ok++}
+    for(const m of ms){const r=prMarc(f,m.id);if(!r)continue;withRes++;const p=prPts(e[m.id],r);out.det[m.id]=p;if(p)out.pts+=p;if(p>0)ok++;
+      if(!sinLlave){const k=llavePts(f,m,e[m.id]);if(k){out.llave+=k;out.pts+=k}}}
     if(withRes===ms.length&&ok===ms.length){out.pts+=PR_PLENO;out.plenos.push(c)}}
   return out}
 function prPlayedIn(uid,comps){const fs=prFechas();return fs.some(f=>{const e=prEntry(uid,f.id);return e&&prPartidos(f,comps).some(m=>e[m.id]&&e[m.id].w)})}
@@ -1825,11 +1844,24 @@ function prCard(f,m,editable){const p=S.prDraft[m.id]||{};const r=prMarc(f,m.id)
       <span class="prteam r"><b>${esc(shortClub(m.v))}</b><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(m.v)}</svg></span></div>
     <div class="prbtns">${btn("L","Gana "+esc(shortClub(m.l)))}${btn("E","Empate")}${btn("V","Gana "+esc(shortClub(m.v)))}</div>
     ${needD?`<div class="prdiff"><span class="small muted">¿Por cuántos?</span><div class="stepper"><button class="btn sm" data-prd="${esc(m.id)}" data-step="-1" ${editable?"":"disabled"} aria-label="Menos">−</button><input type="number" inputmode="numeric" min="1" max="99" class="num" data-prdin="${esc(m.id)}" value="${p.d||""}" placeholder="–" ${editable?"":"disabled"} aria-label="Diferencia"><button class="btn sm" data-prd="${esc(m.id)}" data-step="1" ${editable?"":"disabled"} aria-label="Más">+</button></div></div>`:""}
+    ${hasLlave(m)?llaveRow(f,m,p,editable):""}
     ${r&&f.estado==="final"?(()=>{const real=r.l===r.v?"Empate":`${esc(shortClub(r.l>r.v?m.l:m.v))} por ${Math.abs(r.l-r.v)}`;
       const mine=!p.w?"—":p.w==="E"?"Empate":`${esc(shortClub(p.w==="L"?m.l:m.v))} por ${p.d||"?"}`;
       const why=!p.w?"Sin pronóstico":pts===PR_EMPATE&&p.w==="E"?"Empate acertado":pts===0?"Erraste el ganador":pts===PR_EXACTO?"Exacto":(+p.d>0?`Erraste por ${prErr(p,r)}`:"Ganador");
       return `<div class="prres"><div class="prbox"><span>Pusiste</span><b>${mine}</b></div><div class="prbox"><span>Fue</span><b>${real}</b></div><div class="prbox pts ${pts>0?"pos":"zero"}"><span>Sumás</span><b class="num">${pts>0?"+":""}${pts||0}</b><small>${why}</small></div></div>`})():""}
   </div>`}
+function llaveRow(f,m,p,editable){const q=p.k&&S.plantel[p.k];const fin=f.estado==="final"&&prMarc(f,m.id);
+  if(fin){const k=llavePts(f,m,p);return `<div class="llave res${k?" ok":""}"><span class="lk">${KEY_SVG}</span><span class="lt"><small>Llave del try</small><b>${q?esc(q.n):"No elegiste"}</b></span><span class="lr">${q?(k?"Hizo try":"Sin try"):""}</span><b class="num lp">${k?"+"+k:"0"}</b></div>`}
+  return `<button class="llave${q?" set":""}" data-llave="${esc(m.id)}" ${editable?"":"disabled"}><span class="lk">${KEY_SVG}</span><span class="lt"><small>Llave del try · +${PR_LLAVE}</small><b>${q?esc(q.n):editable?"Elegí un jugador":"Sin elegir"}</b></span>${q?`<span class="pkit sm"><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(q.d)}</svg></span>`:""}${editable?`<span class="lgo">›</span>`:""}</button>`}
+function openLlaveSheet(mid){const f=S.fechas.find(x=>x.id===S.prFecha);const m=f&&prPartidos(f).find(x=>x.id===mid);if(!m)return;const cur=(S.prDraft[mid]||{}).k;
+  const el=$("#sheet");el.hidden=false;sheetRole="llave";
+  const grp=club=>{const ps=Object.entries(S.plantel).filter(([,p])=>p.d===club).sort((a,b)=>(alinOf(f,b[0])==="T")-(alinOf(f,a[0])==="T")||a[1].n.localeCompare(b[1].n));
+    return `<div class="llg"><span class="pkit"><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(club)}</svg></span><b>${esc(club)}</b></div>`+(ps.length?ps.map(([id,p])=>`<button class="pick${id===cur?" sel":""}" data-llave-pick="${esc(id)}" data-llave-m="${esc(mid)}"><span class="pkl"><span style="display:flex;flex-direction:column;min-width:0;gap:3px"><span class="pkn">${esc(p.n)}</span><span class="row" style="gap:8px;flex-wrap:nowrap;align-items:center">${alinOf(f,id)==="T"?alinTag("T",false):""}<span class="small muted">${esc(posNames(p))}</span></span></span></span>${id===cur?`<span class="tag" style="background:var(--accent);color:var(--accent-fg)">Elegido</span>`:""}</button>`).join(""):`<p class="small muted" style="padding:0 8px">Sin jugadores cargados.</p>`)};
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Llave del try">
+    <div class="hd"><div class="row" style="justify-content:space-between"><h2>Llave del try</h2><button class="btn sm" id="closeSheet">Cerrar</button></div><div class="small muted">${esc(shortClub(m.l))} vs ${esc(shortClub(m.v))}. Elegí un jugador de cualquiera de los dos. Si hace try, +${PR_LLAVE}.${cur?" Tocá al elegido para sacarlo.":""}</div></div>
+    <div class="list">${grp(m.l)}${grp(m.v)}</div></div></div>`}
+$("#sheet").addEventListener("click",e=>{const b=e.target.closest("[data-llave-pick]");if(!b)return;const mid=b.dataset.llaveM,id=b.dataset.llavePick;const p=S.prDraft[mid]||(S.prDraft[mid]={});
+  if(p.k===id){delete p.k;if(!p.w)delete S.prDraft[mid]}else p.k=id;S.prDirty=true;closeSheet();render()});
 function renderPXV(){
   const v=$("#view");const fs=prFechas();
   if(!fs.length){$("#savebar").hidden=true;v.innerHTML=`<section class="view"><div class="empty"><h3>Todavía no hay partidos</h3>${S.isOwner?"Cargalos en <b>Admin</b>.":"Cuando se cargue el fixture de la fecha, vas a poder pronosticar acá."}</div></section>`;return}
@@ -1864,7 +1896,8 @@ $("#view").addEventListener("click",e=>{
   if(S.game!=="prode")return;
   const fb=e.target.closest("[data-pfecha]");if(fb){if(S.prDirty&&S.prFecha!==fb.dataset.pfecha&&!confirmLeave())return;S.prFecha=fb.dataset.pfecha;S.prDirty=false;S.prKey=null;render();return}
   const pc=e.target.closest("[data-pcomp]");if(pc){const c=pc.dataset.pcomp;let l=myComps().slice();if(l.includes(c)){if(l.length===1){toast("Tenés que jugar al menos una competencia");return}l=l.filter(x=>x!==c)}else l.push(c);S.prCompsDraft=COMP_IDS.filter(x=>l.includes(x));S.prDirty=true;render();return}
-  const wb=e.target.closest("[data-prw]");if(wb&&!wb.disabled){const id=wb.dataset.prw;const w=wb.dataset.w;const p=S.prDraft[id]||(S.prDraft[id]={});if(p.w===w){delete S.prDraft[id]}else{p.w=w;if(w==="E")delete p.d}S.prDirty=true;render();return}
+  const lb=e.target.closest("[data-llave]");if(lb&&!lb.disabled){openLlaveSheet(lb.dataset.llave);return}
+  const wb=e.target.closest("[data-prw]");if(wb&&!wb.disabled){const id=wb.dataset.prw;const w=wb.dataset.w;const p=S.prDraft[id]||(S.prDraft[id]={});if(p.w===w){delete p.w;delete p.d;if(!p.k)delete S.prDraft[id]}else{p.w=w;if(w==="E")delete p.d}S.prDirty=true;render();return}
   const sp=e.target.closest("[data-prd]");if(sp&&!sp.disabled){const id=sp.dataset.prd;const p=S.prDraft[id]||(S.prDraft[id]={});p.d=Math.max(1,Math.min(99,(+p.d||0)+(+sp.dataset.step)));S.prDirty=true;render();return}
 });
 $("#view").addEventListener("input",e=>{if(S.game!=="prode")return;const t=e.target;if(t.dataset&&t.dataset.prdin){const p=S.prDraft[t.dataset.prdin]||(S.prDraft[t.dataset.prdin]={});const v=parseInt(t.value,10);if(v>0)p.d=Math.min(99,v);else delete p.d;S.prDirty=true}});
@@ -1875,7 +1908,7 @@ $("#savebar").addEventListener("click",async e=>{
   const comps=myComps();const ms=prPartidos(f,comps);const falt=ms.filter(m=>{const p=S.prDraft[m.id];return !p||!p.w||((p.w==="L"||p.w==="V")&&!p.d)});
   if(falt.length&&!S._prWarn){S._prWarn=true;toast(`Te falta${falt.length>1?"n":""} ${falt.length} partido${falt.length>1?"s":""} (ganador y diferencia). Tocá Guardar de nuevo para guardar igual.`);setTimeout(()=>S._prWarn=false,5000);return}
   S._prWarn=false;
-  const clean={};for(const m of ms){const p=S.prDraft[m.id];if(p&&p.w)clean[m.id]=p.w==="E"?{w:"E"}:{w:p.w,d:+p.d||0}}
+  const clean={};for(const m of ms){const p=S.prDraft[m.id];if(!p)continue;const o=p.w?(p.w==="E"?{w:"E"}:{w:p.w,d:+p.d||0}):{};if(p.k&&hasLlave(m)&&S.plantel[p.k])o.k=p.k;if(o.w||o.k)clean[m.id]=o}
   const cur=S.prode[S.uid]||{};const fechas=JSON.parse(JSON.stringify(cur.fechas||{}));fechas[f.id]=clean;
   S.saving=true;render();
   try{await S.db.doc("prode/"+S.uid).set({fechas,comps,at:new Date().toISOString()});
@@ -1898,7 +1931,7 @@ function renderPTabla(){
   const comps=L?((L.comps&&L.comps.length?L.comps:["top14"]).filter(c=>COMP_N[c])):[S.ptComp];
   const mineBar=mineC.length?`<div class="seg" role="group" aria-label="Mis competencias">${mineC.map(c=>`<button data-ptcomp="${c}" aria-pressed="${!viewOnly&&c===S.ptComp}">${esc(COMP_N[c])}</button>`).join("")}</div>`:"";
   const otherBar=otherC.length?`<div class="othc"><span class="small muted">Otras competencias · solo para ver</span><div class="row" style="gap:6px;flex-wrap:wrap">${otherC.map(c=>`<button class="chip ghost" data-ptcomp="${c}" aria-pressed="${c===S.ptComp}">👀 ${esc(COMP_N[c])}</button>`).join("")}</div></div>`:"";
-  const compBar=L?`<div class="banner small">Suman: <b style="font-family:var(--body);font-size:14px;text-transform:none">${comps.map(c=>esc(COMP_N[c])).join(" + ")}</b></div>`
+  const compBar=L?`<div class="banner small">Suman: <b style="font-family:var(--body);font-size:14px;text-transform:none">${comps.map(c=>esc(COMP_N[c])).join(" + ")}</b>${comps.includes(LLAVE_COMP)?` · ${sinLlaveL(L)?"Sin":"Con"} Llave del try`:""}</div>`
     :viewOnly?`<div class="banner small" style="justify-content:space-between;gap:10px;flex-wrap:wrap"><span>👀 <b style="font-family:var(--body);font-size:14px;text-transform:none">${esc(COMP_N[S.ptComp])}</b> · Solo para ver: no jugás esta competencia. Para sumarte, elegila en Mi Prode.</span>${mineC.length?`<button class="btn sm" data-ptcomp="${mineC[0]}">Volver a mis tablas</button>`:""}</div>`:"";
   const ptHead=viewOnly?`${otherBar}${compBar}`:`${L?"":mineBar}${bar}${compBar}${L?"":otherBar}`;
   const cfs=fs.filter(f=>prPartidos(f,comps).length);const cfins=cfs.filter(f=>f.estado==="final");
@@ -1907,7 +1940,7 @@ function renderPTabla(){
   const fSel=mode==="fecha"?cfs.find(f=>f.id===S.ptFecha):null;const pub=!fSel||fSel.estado==="final";const last=cfins[cfins.length-1];
   const fname=f=>comps.length===1?compFecha(f,comps[0]):prDia(f);
   const lim=S.tLimit||100;
-  const T=rpcTabla(comps,fSel?fSel.id:null,last?last.id:null,S.liga==="__club"?myClubSaved():null,S.liga&&S.liga!=="__club"?S.liga:null,lim);
+  const T=rpcTabla(tablaJuegos(comps,L),fSel?fSel.id:null,last?last.id:null,S.liga==="__club"?myClubSaved():null,S.liga&&S.liga!=="__club"?S.liga:null,lim);
   const segs=`<div class="seg" role="group" aria-label="Tipo de tabla"><button data-ptmode="general" aria-pressed="${mode==="general"}">General</button><button data-ptmode="fecha" aria-pressed="${mode==="fecha"}">Por fecha</button></div>
     ${mode==="fecha"?`<div class="chips" role="group" aria-label="Fecha">${cfs.map(f=>`<button class="chip" data-ptfecha="${esc(f.id)}" aria-pressed="${fSel&&fSel.id===f.id}"><span class="dot ${f.estado}"></span>${esc(fname(f))}</button>`).join("")}</div>`:""}`;
   if(!T.rows){v.innerHTML=`<section class="view">${ptHead}${segs}<div class="empty">${T.err?"No se pudo cargar la tabla. Probá de nuevo en un rato.":"Cargando tabla…"}</div></section>`;return}
@@ -1922,7 +1955,7 @@ function renderPTabla(){
     const c3=mode==="fecha"?(pub?r.fp:"–"):(last?r.last:"–");
     return `${gap}<tr class="clk${r.id===S.uid?" me":""}" data-popen="${esc(r.id)}" tabindex="0" aria-expanded="${open}"><td class="rank num">${pub?r.rank:"·"}</td><td><div style="font-weight:600;white-space:normal">${esc(r.who)}${r.id===S.uid?' <span class="tag">Vos</span>':""}${r.plenos?` <span class="tag" style="color:var(--accent)">${r.plenos} pleno${r.plenos>1?"s":""}</span>`:""}</div><div class="small muted">${hasClubTable(r.club)?esc(r.club):""}</div></td>
       ${mode==="fecha"?`<td class="r big num">${c3}</td><td class="r num muted">${r.tot}</td>`:`<td class="r num muted">${c3}</td><td class="r big num">${r.tot}</td>`}</tr>
-      ${open?`<tr class="detail"><td colspan="4">${prDetail(r.id,detF,comps)}</td></tr>`:""}`}).join("");
+      ${open?`<tr class="detail"><td colspan="4">${prDetail(r.id,detF,comps,sinLlaveL(L))}</td></tr>`:""}`}).join("");
   const head=mode==="fecha"?`<th class="r">${fSel?esc(fname(fSel)):"Fecha"}</th><th class="r">Total</th>`:`<th class="r">${last?esc(fname(last)):"Últ."}</th><th class="r">Total</th>`;
   const more=total>lim?`<div class="row" style="justify-content:center"><button class="btn sm" data-tmore="1">Ver más (${lim} de ${total})</button></div>`:"";
   v.innerHTML=`<section class="view">${ptHead}${segs}
@@ -1934,18 +1967,18 @@ function renderPTabla(){
 async function prFillNames(){const els=[...document.querySelectorAll("#view [data-who]")];const ids=[...new Set(els.map(e=>e.dataset.who))];if(!ids.length)return;let ps={};try{if(S.user)ps=await S.user.profiles(ids)}catch(e){}
   els.forEach(el=>{const p=ps[el.dataset.who];const t=S.equipos[el.dataset.who];el.textContent=(p&&p.name)||(t&&t.nombre)||"Jugador"})}
 function prWhy(p,r,pts){if(!p||!p.w)return "Sin pronóstico";if(p.w==="E")return pts?"Empate acertado":"No fue empate";if(r.l===r.v)return "Fue empate";if(!pts)return "Erró el ganador";if(!(+p.d>0))return "Ganador";const e=prErr(p,r);return e===0?"Exacto":`Erró por ${e}`}
-function prDetail(uid,f,comps){if(!f)return `<span class="muted small">Sin fechas todavía.</span>`;let e=prEntry(uid,f.id);
+function prDetail(uid,f,comps,sinLl){if(!f)return `<span class="muted small">Sin fechas todavía.</span>`;let e=prEntry(uid,f.id);
   if(f.estado==="abierta"&&uid!==S.uid)return `<div class="small muted">Este prode se ve cuando cierre la fecha. Así nadie copia.</div>`;
   if(!e&&uid!==S.uid){const c=entryFetch("prode",uid,f.id);if(!c.done)return `<span class="muted small">Cargando…</span>`;e=c.e;if(e){S.prode[uid]=S.prode[uid]||{fechas:{}};S.prode[uid].fechas[f.id]=e}}
   if(!e||!Object.keys(e).length)return `<span class="muted small">No pronosticó esta fecha.</span>`;
   if(f.estado==="abierta"&&uid!==S.uid)return `<div class="small muted">Este prode se ve cuando cierre la fecha. Así nadie copia.</div>`;
   const pub=f.estado==="final";let html="";
-  for(const c of comps){const ms=prPartidos(f,[c]);if(!ms.length)continue;const tot=pub?prFechaPts(uid,f,[c]):null;
+  for(const c of comps){const ms=prPartidos(f,[c]);if(!ms.length)continue;const tot=pub?prFechaPts(uid,f,[c],sinLl):null;
     if(comps.length>1)html+=`<div class="pdrow" style="border-bottom:0;padding-bottom:0"><b style="font:italic 800 15px var(--display);text-transform:uppercase;color:var(--accent)">${esc(COMP_N[c])} · ${esc(compFecha(f,c))}</b></div>`;
     html+=ms.map(m=>{const p=e[m.id];const r=prMarc(f,m.id);const pts=pub&&r?prPts(p,r):null;
       const mine=!p?"—":p.w==="E"?"Empate":`${esc(shortClub(p.w==="L"?m.l:m.v))} por ${p.d||"?"}`;
       const real=r?(r.l===r.v?"Empate":`${esc(shortClub(r.l>r.v?m.l:m.v))} por ${Math.abs(r.l-r.v)}`):"";
-      return `<div class="pdrow"><div style="min-width:0"><div class="small"><b>${esc(shortClub(m.l))} ${r?`${r.l}–${r.v}`:"vs"} ${esc(shortClub(m.v))}</b></div><div class="small muted">Puso: ${mine}${r?` · Fue: ${real}`:""}${pts!=null?` · <span class="${pts>0?"pos":""}">${prWhy(p,r,pts)}</span>`:""}</div></div><b class="num pdpts ${pts>0?"pos":""}">${pts==null?"–":(pts>0?"+":"")+pts}</b></div>`}).join("");
+      return `<div class="pdrow"><div style="min-width:0"><div class="small"><b>${esc(shortClub(m.l))} ${r?`${r.l}–${r.v}`:"vs"} ${esc(shortClub(m.v))}</b></div><div class="small muted">Puso: ${mine}${r?` · Fue: ${real}`:""}${pts!=null?` · <span class="${pts>0?"pos":""}">${prWhy(p,r,pts)}</span>`:""}</div></div><b class="num pdpts ${pts>0?"pos":""}">${pts==null?"–":(pts>0?"+":"")+pts}</b></div>${!sinLl&&p&&p.k&&hasLlave(m)&&S.plantel[p.k]?(()=>{const k=pub?llavePts(f,m,p):null;return `<div class="pdrow"><div class="small muted" style="padding-left:10px">Llave del try: <b style="color:var(--fg)">${esc(S.plantel[p.k].n)}</b>${k!=null?` · <span class="${k?"pos":""}">${k?"hizo try":"sin try"}</span>`:""}</div><b class="num pdpts ${k?"pos":""}">${k==null?"–":k?"+"+k:"0"}</b></div>`})():""}`}).join("");
     if(tot&&tot.plenos.length)html+=`<div class="pdrow"><div class="small"><b style="color:var(--accent)">Pleno de ganadores</b> <span class="muted">· acertó los ${ms.length}</span></div><b class="num pdpts" style="color:var(--accent)">+${PR_PLENO}</b></div>`;
     if(tot)html+=`<div class="pdrow pdtot"><div class="small"><b>Total ${esc(COMP_N[c])}</b></div><b class="num pdpts">${tot.pts}</b></div>`}
   return `<div style="display:flex;flex-direction:column">${html}</div>`}
@@ -1962,12 +1995,13 @@ $("#view").addEventListener("click",e=>{
 function renderPReglas(){
   $("#view").innerHTML=`<section class="view">
     <div><h2 style="margin-bottom:10px">Cómo se suman puntos</h2>
-    <div class="pts-grid"><div class="k"><span>Diferencia exacta</span><b class="num pos">+${PR_EXACTO}</b></div><div class="k"><span>Errás por 5 o menos</span><b class="num pos">+${PR_CERCA}</b></div><div class="k"><span>Errás por 6 a 10</span><b class="num pos">+${PR_MEDIO}</b></div><div class="k"><span>Errás por más de 10</span><b class="num pos">+${PR_GANADOR}</b></div><div class="k"><span>Empate exacto</span><b class="num pos">+${PR_EMPATE}</b></div><div class="k"><span>Pleno de fecha</span><b class="num pos">+${PR_PLENO}</b></div><div class="k"><span>Errar ganador</span><b class="num">0</b></div></div></div>
+    <div class="pts-grid"><div class="k"><span>Diferencia exacta</span><b class="num pos">+${PR_EXACTO}</b></div><div class="k"><span>Errás por 5 o menos</span><b class="num pos">+${PR_CERCA}</b></div><div class="k"><span>Errás por 6 a 10</span><b class="num pos">+${PR_MEDIO}</b></div><div class="k"><span>Errás por más de 10</span><b class="num pos">+${PR_GANADOR}</b></div><div class="k"><span>Empate exacto</span><b class="num pos">+${PR_EMPATE}</b></div><div class="k"><span>Pleno de fecha</span><b class="num pos">+${PR_PLENO}</b></div><div class="k"><span>Llave del try</span><b class="num pos">+${PR_LLAVE}</b></div><div class="k"><span>Errar ganador</span><b class="num">0</b></div></div></div>
     <div class="card"><h3>Reglas del Prode</h3><ul class="rules">
       <li>Hay dos competencias: <b>${PR_COMPS.map(c=>c[1]).join("</b> y <b>")}</b>. Jugás las que quieras: las elegís arriba de tus pronósticos.</li>
       <li>En cada partido elegís quién gana y por cuántos puntos, o empate.</li>
       <li>Si acertás el ganador, sumás según qué tan cerca estuviste de la diferencia: exacta <b>${PR_EXACTO}</b>, errás por 5 o menos <b>${PR_CERCA}</b>, por 6 a 10 <b>${PR_MEDIO}</b>, por más de 10 <b>${PR_GANADOR}</b>.</li>
       <li>Si te la jugás al empate y sale empate, sumás <b>${PR_EMPATE}</b>. Si no sale, 0.</li>
+      <li><b>Llave del try</b> (solo T14): en cada partido elegís un jugador de cualquiera de los dos equipos. Si hace try, sumás <b>+${PR_LLAVE}</b>; si no, 0. Cuenta para la tabla general. En los torneos privados, el que lo crea elige si se juega con o sin llave.</li>
       <li><b>Pleno de fecha:</b> si acertás el ganador (o el empate) de todos los partidos de una competencia, +${PR_PLENO} en esa competencia.</li>
       <li>Cada competencia tiene su propia tabla, y dentro de cada una, la tabla de tu club. No hay una tabla que sume todas.</li>
       <li><b>¿Querés jugar varias competencias juntas?</b> Armá un torneo privado con tus amigos y elegí qué competencias suman. Quedan fijas desde que lo creás; si querés cambiarlas, creá otro torneo.</li>
