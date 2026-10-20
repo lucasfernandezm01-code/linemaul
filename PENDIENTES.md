@@ -28,6 +28,7 @@
 - [ ] Grid histórico: cargar la trayectoria de los jugadores en el verano
 
 ## Para evaluar
+- [ ] Puntos de nivelación: el que se suma tarde arranca con el puntaje mínimo histórico, no de cero (idea de Head Coach)
 - [ ] Presupuesto Fantasy: $100M; 3 niveles ($7M figura, $5M titular, $3M resto); precios por demanda (±0,3) y rendimiento (±0,2), máx. ±$0,5M por fecha (±$1M primeras 3), entre $2M y $12M; plata en caja, se vende al precio actual
 - [ ] El tapado: +3 si un jugador elegido por <5% suma ≥5 (sin duplicar capitán). Según cuántos jueguen en 2027
 - [ ] App Store / Google Play
