@@ -1,7 +1,6 @@
 # Line & Maul · lista de pendientes (actualizada 20/10/2026)
 
 ## Nuevas funciones
-- [ ] Llave del try (Prode): un jugador por partido; si hace try, +3. Falta decidir valor, si va solo en T14 y el nombre
 - [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
 - [ ] Buzón de sugerencias: ideas, cosas a mejorar, ayuda que puedan brindar; se leen en Panel Admin (necesita SQL nuevo en Supabase)
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
@@ -33,6 +32,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Llave del try (Prode T14): +1 si tu jugador hace try; tabla general con llave, torneos privados con o sin
 - [x] Comparación con Head Coach URBA
 - [x] Estética v2 en todo el sitio (cards premium, pestañas, títulos, paleta) y camisetas en "elegir jugador"
 - [x] Victoria del club (+1 / +2 con bonus, el capitán la duplica)
