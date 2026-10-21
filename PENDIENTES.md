@@ -31,7 +31,8 @@
 - [ ] Hockey
 
 ## Hecho reciente
-- [x] Buzón de sugerencias (inicio → Panel Admin → Buzón). Lucas corre supabase/08_sugerencias.sql
+- [x] Buzón de sugerencias (inicio → Panel Admin → Buzón), SQL 08 corrido y probado
+- [x] Inicio: orden Instalala → Notificaciones → Buzón
 - [x] Limpieza 2027 cargada y fecha 26 de 2026 borrada en LM
 - [x] Llave del try (Prode T14): +1 si tu jugador hace try; tabla general con llave, torneos privados con o sin
 - [x] Comparación con Head Coach URBA
