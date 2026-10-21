@@ -2,7 +2,6 @@
 
 ## Nuevas funciones
 - [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
-- [ ] Buzón de sugerencias: ideas, cosas a mejorar, ayuda que puedan brindar; se leen en Panel Admin (necesita SQL nuevo en Supabase)
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
 
 ## Antes de febrero
@@ -32,6 +31,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Buzón de sugerencias (inicio → Panel Admin → Buzón). Lucas corre supabase/08_sugerencias.sql
 - [x] Limpieza 2027 cargada y fecha 26 de 2026 borrada en LM
 - [x] Llave del try (Prode T14): +1 si tu jugador hace try; tabla general con llave, torneos privados con o sin
 - [x] Comparación con Head Coach URBA
