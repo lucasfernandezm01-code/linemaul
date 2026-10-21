@@ -2085,7 +2085,7 @@ function renderPReglas(){
       <li>Cada fecha cierra 5 minutos antes del primer partido (normalmente el sábado a las 15:25, porque arrancan 15:30). Mientras está abierta, los pronósticos de los demás quedan ocultos.</li>`
       :`<li><b>Pleno de fecha:</b> si acertás el ganador (o el empate) de todos los partidos de la fecha del ${esc(COMP_N[regComps()[0]])}, +${PR_PLENO}.</li>
       <li>El ${esc(COMP_N[regComps()[0]])} tiene su propia tabla, y dentro de ella, la tabla de tu club. También podés armar torneos privados con tus amigos.</li>
-      <li>Cada fecha cierra 5 minutos antes del primer partido. Mientras está abierta, los pronósticos de los demás quedan ocultos.</li>`}
+      <li>Cada fecha cierra 5 minutos antes del primer partido (normalmente el sábado a las 15:25, porque arrancan 15:30). Mientras está abierta, los pronósticos de los demás quedan ocultos.</li>`}
       <li>El Prode y el Fantasy son juegos separados, con tablas y torneos privados propios.</li>
       ${regComps().includes("cba")?`<li>Ejemplo: pronosticás Tala por 7. Si gana Tala por 7, 5 pts. Por 3 o por 12, 3. Por 15, 2. Por 25, 1. Si gana La Tablada o empatan, 0.</li>`:`<li>Ejemplo: pronosticás CASI por 7. Si gana CASI por 7, 5 pts. Por 3 o por 12, 3. Por 15, 2. Por 25, 1. Si gana SIC o empatan, 0.</li>`}
     </ul></div>
@@ -2103,7 +2103,14 @@ function renderPReglas(){
       <li>Se cierran con el cierre de la Fecha 1 y no se pueden cambiar en toda la temporada.</li>
       <li>Tiene que ser coherente: tu campeón tiene que estar entre tus finalistas, y tus finalistas entre tus semifinalistas.</li>
       <li>Se resuelven a fin de año y suman a la tabla del T14 (y a los torneos privados que incluyan el T14). Máximo: 58 pts.</li>
-      <li>No incluye la 1A.</li>
+      </ul></div>
+    <div class="card"><h3>🏆 Pronósticos de temporada · 1A <span class="tag" style="vertical-align:middle">Desde 2027</span></h3>
+      <div class="pts-grid" style="margin:8px 0 12px"><div class="k"><span>Campeón</span><b class="num pos">+10</b></div><div class="k"><span>2.º ascenso</span><b class="num pos">+5</b></div><div class="k"><span>Descensos · c/u</span><b class="num pos">+3</b></div><div class="k"><span>Tryman del torneo</span><b class="num pos">+10</b></div><div class="k"><span>Goleador del torneo</span><b class="num pos">+10</b></div></div>
+      <ul class="rules">
+      <li>Antes de la Fecha 1 elegís campeón, el segundo ascenso, los que descienden, el tryman (más tries) y el goleador (más puntos) del año.</li>
+      <li>Se cierran con el cierre de la Fecha 1 y no se pueden cambiar en toda la temporada.</li>
+      <li>El campeón y el segundo ascenso tienen que ser equipos distintos.</li>
+      <li>Se resuelven a fin de año y suman a la tabla de la 1A (y a los torneos privados que incluyan la 1A).</li>
     </ul></div>`}</section>`;
 }
 
