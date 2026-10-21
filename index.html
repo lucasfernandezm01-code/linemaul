@@ -1880,7 +1880,8 @@ const PR_LLAVE=1,LLAVE_COMP="top14",SIN_LLAVE="sinllave";
 const LLAVE_J={top14:"llave",cba:"llave_cba"};const LLAVE_COMPS=Object.keys(LLAVE_J);const hasLlaveC=cs=>cs.some(c=>LLAVE_J[c]);
 function sinLlaveL(L){return !!(L&&Array.isArray(L.comps)&&L.comps.includes(SIN_LLAVE))}
 function tablaJuegos(comps,L){return sinLlaveL(L)?comps:comps.concat(comps.filter(c=>LLAVE_J[c]).map(c=>LLAVE_J[c]))}
-const PRIMERA_A=["Champagnat","Curupaytí","Deportiva Francesa","GEBA","Hurling","Lomas Athletic","Olivos","Pucará","Pueyrredón","San Albano","San Andrés","San Cirano","San Fernando","Universitario de La Plata"];
+/* 1A 2027: bajaron Champagnat y Los Matreros del T14. Faltan los ascensos/descensos propios de la 1A */
+const PRIMERA_A=["Champagnat","Curupaytí","Deportiva Francesa","GEBA","Hurling","Lomas Athletic","Los Matreros","Olivos","Pucará","Pueyrredón","San Albano","San Andrés","San Cirano","San Fernando","Universitario de La Plata"];
 /* T10 de Córdoba (lista 2025; confirmar 2026) */
 const T10_CBA=["Carlos Paz","Córdoba Athletic","Jockey Club Córdoba","Jockey Villa María","La Tablada","Palermo Bajo","San Martín","Tala","Universitario Córdoba","Urú Curé"];
 const COMP_CLUBS={top14:DIVS,a:PRIMERA_A,cba:T10_CBA};

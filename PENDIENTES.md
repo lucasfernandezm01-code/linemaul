@@ -16,6 +16,7 @@
 
 ## Temporada 2027
 - [ ] Definir el segundo ascendido al T14 y sumarlo (Lucas avisa)
+- [ ] Clubes de la 1A 2027: sacar los que suben al T14 y sumar/sacar los ascensos y descensos de la 1A (Lucas avisa). Ya sumé Los Matreros
 - [ ] Plantel y Head Coach de San Luis (hoy no tiene jugadores cargados)
 - [ ] Fixture 2027
 - [ ] Dominio linemaul.com.ar
