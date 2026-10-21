@@ -13,6 +13,8 @@
 - [ ] Fantasy + Prode Córdoba (Primera UCR): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
 - [ ] Carga automática de resultados para los prodes
 - [ ] Mejorar la estética de los posteos
+- [ ] Prueba general automática de todo el sitio (Fantasy, Prode por región, tablas, torneos, admin, buzón, notificaciones)
+- [ ] Fecha de prueba con 5 a 10 amigos jugando antes del arranque
 
 ## Temporada 2027
 - [ ] Definir el segundo ascendido al T14 y sumarlo (Lucas avisa)
