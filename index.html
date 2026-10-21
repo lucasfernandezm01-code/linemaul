@@ -390,6 +390,11 @@ ul.rules{gap:9px}
 .llave.res{border-style:solid;border-color:var(--line);background:rgba(255,255,255,.04);cursor:default}.llave.res .lk{background:var(--chip);color:var(--muted)}.llave.res.ok{border-color:var(--good)}.llave.res.ok .lk{background:var(--good);color:#06301a}
 .llave .lr{font-size:12px;color:var(--muted)}.llave.ok .lr{color:var(--good)}.llave .lp{font:800 22px var(--display);flex:none}.llave.ok .lp{color:var(--good)}
 .llg{display:flex;align-items:center;gap:10px;padding:14px 6px 6px;font-family:var(--display);font-size:18px;text-transform:uppercase;font-style:italic}
+.buzbtn{appearance:none;display:flex;align-items:center;gap:14px;width:100%;text-align:left;margin-top:14px;padding:14px 16px;border-radius:18px;border:1px solid rgba(246,239,230,.14);background:rgba(0,0,0,.2);color:#f6efe6;font-family:var(--body);cursor:pointer}
+.buzbtn .bzi{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:20px;background:rgba(242,194,26,.14)}
+.buzbtn>span:nth-child(2){flex:1;display:flex;flex-direction:column}.buzbtn small{font-size:13px;color:rgba(246,239,230,.7)}.buzbtn .hgo{color:#f2c21a;font-size:24px}
+.sugl{display:flex;flex-direction:column;gap:10px}.sugi{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:16px;background:rgba(255,255,255,.045);border:1px solid var(--line)}.sugi.leida{opacity:.6}
+.sugt{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
 /* inicio */
 .hgame{border-radius:22px;padding:18px 16px 18px 14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 18px 38px -14px rgba(0,0,0,.65)}
 #home .hgames{gap:14px}
@@ -573,7 +578,8 @@ function hubList(){const l=[["resumen","Resumen",[["metricas","Métricas","admin
   ["jugadores","Jugadores",[["plantel","Plantel","admin"]]],
   ["clubes","Clubes",[["camis","T14","admin"],["pa","1A","padmin"]]],
   ["ajustes","Ajustes",[["valores","Puntaje","admin"]].concat(typeof adminImport==="function"?[["importar","Importar","admin"]]:[])]];
-  if(typeof adminAvisos==="function")l.push(["notif","Notificaciones",[["avisos","Avisos","admin"]]]);return l}
+  if(typeof adminAvisos==="function")l.push(["notif","Notificaciones",[["avisos","Avisos","admin"]]]);
+  if(typeof adminBuzon==="function")l.push(["buzon","Buzón"+(S.sugN?` (${S.sugN})`:""),[["buzon","Sugerencias","admin"]]]);return l}
 function hubApply(){const l=hubList();if(!l.find(x=>x[0]===S.hub))S.hub=l[0][0];const h=l.find(x=>x[0]===S.hub);S.hubSub=S.hubSub||{};
   const subs=h[2];let sb=subs.find(x=>x[0]===S.hubSub[S.hub])||subs[0];S.hubSub[S.hub]=sb[0];S.tab=sb[2];
   if(sb[2]==="admin")S.adminTab=sb[0];else S.paSub=sb[0]==="pa"?"camis":"partidos"}
@@ -597,7 +603,50 @@ const LM_LOGO="data:image/webp;base64,UklGRjbfAABXRUJQVlA4WAoAAAAQAAAA/wEA/wEAQU
 const HOME_SLOGAN="El juego del rugby argentino";
 function renderHome(){const h=$("#home");if(!h)return;
   h.innerHTML=`<img class="hlogo" src="${LM_LOGO}" alt="Line & Maul"><div class="hslogan">${esc(HOME_SLOGAN)}</div><div class="hpick">Elegí tu juego</div>
-  <div class="hgames">${["dt","prode"].map(k=>{const g=GAME_TXT[k];return `<button class="hgame ${k}" data-hgame="${k}"><img src="${LOGOS[k]}" alt=""><span class="hb"><span class="eyebrow">${esc(g.eye)}</span><span class="ht">${g.t}</span><small>${esc(g.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`}).join("")}${S.isOwner?`<button class="hgame adm" data-hgame="admin"><img src="${LM_LOGO}" alt=""><span class="hb"><span class="eyebrow">Solo para vos${novPend().length?` · 📥 ${novPend().length} novedad${novPend().length>1?"es":""}`:""}</span><span class="ht">${GAME_TXT.admin.t}</span><small>${esc(GAME_TXT.admin.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`:""}</div>${notifHomeHtml()}${installHtml()}`}
+  <div class="hgames">${["dt","prode"].map(k=>{const g=GAME_TXT[k];return `<button class="hgame ${k}" data-hgame="${k}"><img src="${LOGOS[k]}" alt=""><span class="hb"><span class="eyebrow">${esc(g.eye)}</span><span class="ht">${g.t}</span><small>${esc(g.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`}).join("")}${S.isOwner?`<button class="hgame adm" data-hgame="admin"><img src="${LM_LOGO}" alt=""><span class="hb"><span class="eyebrow">Solo para vos${novPend().length?` · 📥 ${novPend().length} novedad${novPend().length>1?"es":""}`:""}${S.sugN?` · 💡 ${S.sugN} sugerencia${S.sugN>1?"s":""}`:""}</span><span class="ht">${GAME_TXT.admin.t}</span><small>${esc(GAME_TXT.admin.sub)}</small></span><span class="hgo" aria-hidden="true">›</span></button>`:""}</div><button class="buzbtn" id="buzOpen"><span class="bzi">💡</span><span><b>Buzón de sugerencias</b><small>Ideas, cosas a mejorar o si querés dar una mano</small></span><span class="hgo" aria-hidden="true">›</span></button>${notifHomeHtml()}${installHtml()}`;if(S.isOwner)sugCount()}
+/* ---------- buzón de sugerencias ---------- */
+const SUG_T=[["idea","💡 Idea"],["mejora","🔧 Algo a mejorar"],["ayuda","🤝 Quiero ayudar"],["otro","💬 Otro"]];const SUG_N=Object.fromEntries(SUG_T);
+let _sugAt=0;async function sugCount(force){if(!S.isOwner||!sb||(!force&&Date.now()-_sugAt<60e3))return;_sugAt=Date.now();try{const {count,error}=await sb.from("sugerencias").select("id",{count:"exact",head:true}).eq("leida",false);if(!error&&(count||0)!==(S.sugN||0)){S.sugN=count||0;if(S.home)render()}}catch(e){}}
+function openBuzon(){const el=$("#sheet");el.hidden=false;sheetRole="buzon";S.sugTipo=S.sugTipo||"idea";
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Buzón de sugerencias">
+    <div class="hd"><div class="row" style="justify-content:space-between"><h2>Buzón de sugerencias</h2><button class="btn sm" id="closeSheet">Cerrar</button></div><div class="small muted">Leemos todo. Contanos qué mejorarías, qué te gustaría que agreguemos o cómo nos podés dar una mano.</div></div>
+    <div class="list" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+      ${S.uid?`<div class="chips" role="group" aria-label="Tipo" style="flex-wrap:wrap">${SUG_T.map(([k,n])=>`<button class="chip" data-sugt="${k}" aria-pressed="${S.sugTipo===k}">${n}</button>`).join("")}</div>
+      <textarea id="sugTxt" maxlength="1000" placeholder="Escribí acá…" style="min-height:150px"></textarea>
+      <div class="row" style="justify-content:space-between"><span class="small muted" id="sugCnt">0/1000</span><button class="btn primary" id="sugGo">Enviar</button></div>`
+      :`<div class="empty" style="padding:22px 16px"><h3>Ingresá para escribirnos</h3><p style="margin:0 0 12px">Así sabemos quién nos escribe y te podemos responder.</p><button class="btn primary" id="sugLogin">Ingresar</button></div>`}
+    </div></div></div>`}
+document.addEventListener("click",async e=>{
+  if(e.target.closest("#buzOpen")){openBuzon();return}
+  if(e.target.closest("#sugLogin")){openAuth("in");return}
+  const t=e.target.closest("[data-sugt]");if(t){S.sugTipo=t.dataset.sugt;document.querySelectorAll("[data-sugt]").forEach(b=>b.setAttribute("aria-pressed",String(b===t)));return}
+  if(e.target.closest("#sugGo")){const b=e.target.closest("#sugGo");const txt=($("#sugTxt").value||"").trim();if(txt.length<3){toast("Escribí un poco más");return}
+    b.disabled=true;b.textContent="Enviando…";
+    try{const {error}=await sb.from("sugerencias").insert({user_id:S.uid,tipo:S.sugTipo||"idea",texto:txt.slice(0,1000)});if(error)throw error;closeSheet();toast("¡Gracias! La recibimos.")}
+    catch(err){b.disabled=false;b.textContent="Enviar";toast(/row-level|policy/i.test(err&&err.message||"")?"Ya mandaste varias hoy. Probá mañana.":"No se pudo enviar. Probá de nuevo.")}return}
+});
+document.addEventListener("input",e=>{if(e.target.id==="sugTxt"){const c=$("#sugCnt");if(c)c.textContent=e.target.value.length+"/1000"}});
+/* admin: leer, marcar y borrar */
+function adminBuzon(){setTimeout(loadBuzon,0);const f=S.sugF||"nuevas";
+  return `<div class="card"><div class="row" style="justify-content:space-between"><h3>Buzón de sugerencias</h3><div class="seg" role="group" aria-label="Filtro"><button data-sugf="nuevas" aria-pressed="${f==="nuevas"}">Nuevas</button><button data-sugf="todas" aria-pressed="${f==="todas"}">Todas</button></div></div><div id="sugList" class="sugl"><p class="small muted" style="margin:0">Cargando…</p></div></div>`}
+async function loadBuzon(){const el=$("#sugList");if(!el)return;const f=S.sugF||"nuevas";
+  try{let q=sb.from("sugerencias").select("id,user_id,tipo,texto,leida,created_at").order("created_at",{ascending:false}).limit(200);if(f==="nuevas")q=q.eq("leida",false);
+    const {data,error}=await q;if(error)throw error;const rows=data||[];
+    if(!rows.length){el.innerHTML=`<p class="small muted" style="margin:0">${f==="nuevas"?"No hay sugerencias nuevas.":"Todavía no llegó ninguna."}</p>`;return}
+    const ids=[...new Set(rows.map(r=>r.user_id))];const who={};
+    try{const {data:pr}=await sb.from("profiles").select("id,nombre,equipo,club").in("id",ids);(pr||[]).forEach(p=>who[p.id]=p)}catch(e){}
+    try{const {data:nr}=await sb.rpc("nombres_reales",{p_ids:ids});(nr||[]).forEach(n=>{who[n.id]=Object.assign(who[n.id]||{},{real:n.nombre_real,email:n.email})})}catch(e){}
+    el.innerHTML=rows.map(r=>{const w=who[r.user_id]||{};const nm=w.real||w.nombre||"Usuario";const sub=[w.nombre&&w.nombre!==nm?w.nombre:"",w.club,w.email].filter(Boolean).join(" · ");
+      return `<div class="sugi${r.leida?" leida":""}"><div class="row" style="justify-content:space-between;gap:8px"><span class="tag">${SUG_N[r.tipo]||r.tipo}</span><span class="small muted">${esc(fmtDT(r.created_at))}</span></div>
+        <div class="sugt">${esc(r.texto)}</div><div class="small muted">${esc(nm)}${sub?` · ${esc(sub)}`:""}</div>
+        <div class="row" style="gap:8px"><button class="btn sm" data-sugleida="${esc(r.id)}" data-v="${r.leida?0:1}">${r.leida?"Marcar como nueva":"✓ Marcar leída"}</button><button class="btn sm danger" data-sugdel="${esc(r.id)}">Borrar</button></div></div>`}).join("")}
+  catch(err){el.innerHTML=`<p class="small muted" style="margin:0">No se pudo cargar. ¿Corriste el SQL 08 en Supabase?</p>`}}
+document.addEventListener("click",async e=>{
+  const fb=e.target.closest("[data-sugf]");if(fb){S.sugF=fb.dataset.sugf;render();return}
+  const lb=e.target.closest("[data-sugleida]");if(lb){lb.disabled=true;const {error}=await sb.from("sugerencias").update({leida:lb.dataset.v==="1"}).eq("id",lb.dataset.sugleida);if(error){toast("No se pudo guardar");lb.disabled=false;return}sugCount(true);loadBuzon();return}
+  const db=e.target.closest("[data-sugdel]");if(db){if(db.dataset.ok!=="1"){db.dataset.ok="1";db.textContent="¿Seguro? Tocá de nuevo";setTimeout(()=>{if(db.isConnected){db.dataset.ok="";db.textContent="Borrar"}},4000);return}
+    db.disabled=true;const {error}=await sb.from("sugerencias").delete().eq("id",db.dataset.sugdel);if(error){toast("No se pudo borrar");db.disabled=false;return}toast("Borrada");sugCount(true);loadBuzon()}
+});
 /* app instalable: botón en Android/Chrome, instrucciones en iPhone */
 let _bip=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();_bip=e;if(S.home)render()});
 window.addEventListener("appinstalled",()=>{_bip=null;try{localStorage.setItem("lm-inst","1")}catch(e){}if(S.home)render()});
@@ -1677,7 +1726,7 @@ function renderAdmin(){
   const at=S.adminTab||"metricas";const sub=[["metricas","Métricas"],["avisos","Notificaciones"],["plantel","Plantel"],["fechas","Fechas"],["alin","Formaciones"],["puntos","Cargar puntos"],["camis","Clubes"],["valores","Puntaje"],["importar","Importar"]];
   if(S.game==="admin")novLoad();
   let html=`<section class="view">${S.game==="admin"?novHtml()+hubChips():`<div class="chips" role="group" aria-label="Admin">${sub.map(([k,n])=>`<button class="chip" data-atab="${k}" aria-pressed="${at===k}">${n}</button>`).join("")}</div>`}`;
-  if(at==="metricas")html+=adminMetricas();else if(at==="avisos"){html+=adminAvisos();setTimeout(loadAvisos,0)}else if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
+  if(at==="metricas")html+=adminMetricas();else if(at==="buzon")html+=adminBuzon();else if(at==="avisos"){html+=adminAvisos();setTimeout(loadAvisos,0)}else if(at==="plantel")html+=adminPlantel();else if(at==="alin")html+=adminAlin();else if(at==="fechas")html+=adminFechas();else if(at==="puntos")html+=adminPuntos();else if(at==="camis")html+=adminCamis();else if(at==="importar")html+=adminImport();else html+=adminValores();
   $("#view").innerHTML=html+"</section>";
 }
 function adminPlantel(){
