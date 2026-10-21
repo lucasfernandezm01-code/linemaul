@@ -5,7 +5,9 @@
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
 
 ## Antes de febrero
-- [ ] Cada prode como juego separado (1A, Córdoba, Tucumán, Litoral)
+- [ ] Fantasy por región: Córdoba (T10). Hoy figura "Próximamente" en el inicio
+- [ ] Prode Tucumán y Litoral: clubes, nombre del torneo y camisetas (hoy "Próximamente")
+- [ ] Confirmar clubes del T10 2026 (cargué la lista 2025) y sus camisetas (Clubes → T10)
 - [ ] Logos de los prodes nuevos (Lucas)
 - [ ] Clubes y camisetas de Córdoba, Tucumán y Litoral
 - [ ] Fantasy + Prode Córdoba (Primera UCR): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
@@ -31,6 +33,8 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Inicio por regiones (acordeón) y Prode por región: Buenos Aires (T14 y 1A) y Córdoba (T10)
+- [x] Arreglo: el primer toque después de escribir la diferencia del prode ya no se pierde
 - [x] Buzón de sugerencias (inicio → Panel Admin → Buzón), SQL 08 corrido y probado
 - [x] Inicio: orden Instalala → Notificaciones → Buzón
 - [x] Limpieza 2027 cargada y fecha 26 de 2026 borrada en LM
