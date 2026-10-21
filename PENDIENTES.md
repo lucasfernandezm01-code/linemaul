@@ -7,7 +7,6 @@
 ## Antes de febrero
 - [ ] Fantasy por región: Córdoba (T10). Hoy figura "Próximamente" en el inicio
 - [ ] Prode Tucumán y Litoral: clubes, nombre del torneo y camisetas (hoy "Próximamente")
-- [ ] Confirmar clubes del T10 2026 (cargué la lista 2025)
 - [ ] Logos de los prodes nuevos (Lucas)
 - [ ] Planteles y resultados de Córdoba (T10): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
 - [ ] Carga automática de resultados para los prodes
@@ -34,7 +33,8 @@
 - [ ] Hockey
 
 ## Hecho reciente
-- [x] Camisetas de los 10 clubes del T10
+- [x] Clubes del T10 confirmados y camisetas de los 10
+- [x] Elegir club: grupos por región (tu región primero) y tabla de tu club solo en la región de tu club
 - [x] Inicio por regiones (acordeón) y Prode por región: Buenos Aires (T14 y 1A) y Córdoba (T10, con Llave del try)
 - [x] Arreglo: el primer toque después de escribir la diferencia del prode ya no se pierde
 - [x] Buzón de sugerencias (inicio → Panel Admin → Buzón), SQL 08 corrido y probado
