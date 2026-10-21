@@ -1,4 +1,4 @@
-# Line & Maul · lista de pendientes (actualizada 20/10/2026)
+# Line & Maul · lista de pendientes (actualizada 21/10/2026)
 
 ## Nuevas funciones
 - [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
@@ -32,6 +32,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Limpieza 2027 cargada y fecha 26 de 2026 borrada en LM
 - [x] Llave del try (Prode T14): +1 si tu jugador hace try; tabla general con llave, torneos privados con o sin
 - [x] Comparación con Head Coach URBA
 - [x] Estética v2 en todo el sitio (cards premium, pestañas, títulos, paleta) y camisetas en "elegir jugador"
