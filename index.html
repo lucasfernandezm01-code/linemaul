@@ -477,10 +477,10 @@ function coachOf(club){return String((S.coaches&&S.coaches[club])||"").trim()}
 const OTROS_CLUBES=["Albatros", "Almafuerte", "Areco", "Argentino", "Arsenal Zárate", "Atlético San Andrés", "Atlético y Progreso", "Banco Hipotecario", "Banco Nación", "Berazategui", "Berisso", "Beromama", "Casa de Padua", "Centro Naval", "Champagnat", "Chascomús", "Ciudad de Buenos Aires", "Ciudad de Campana", "CU Quilmes", "Curupaytí", "DAOM", "Defensores de Glew", "Del Sur", "Delta", "Deportiva Francesa", "Don Bosco", "El Retiro", "Ezeiza", "Floresta", "GE Ituzaingó", "GEBA", "Hurling", "Italiano", "La Salle", "Lanús", "Las Cañas", "Liceo Militar", "Liceo Naval", "Lomas Athletic", "Los Cedros", "Los Molinos", "Los Pinos", "Luján", "Manuel Belgrano", "Marcos Paz", "Mariano Moreno", "Mercedes", "Monte Grande", "Obras Sanitarias", "Old Georgian", "Olivos", "PAC General Rodríguez", "Porteño", "Pucará", "Pueyrredón", "Rivadavia de Lobos", "San Albano", "San Andrés", "San Carlos", "San Cirano", "San Fernando", "San José", "San Marcos", "San Martín", "San Miguel", "San Patricio", "SITAS", "Sociedad Hebraica", "St. Brendan's", "Tigre", "Tiro Federal de Baradero", "Tiro Federal de San Pedro", "Universitario de La Plata", "Varela Jr.", "Vicente López", "Vicentinos", "Virreyes"].sort((a,b)=>a.localeCompare(b,"es"));
 const CLUB_OTRO="Otro";
 function hasClubTable(c){return !!c&&c!==CLUB_OTRO}
-/* opciones de club: primero los de tu región */
+/* opciones de club: T14, 1A, T10 y el resto */
 function clubOptgroups(c){const o=l=>l.map(d=>`<option value="${esc(d)}" ${c===d?"selected":""}>${esc(d)}</option>`).join("");
-  const ba=`<optgroup label="Buenos Aires · T14">${o(DIVS)}</optgroup>`,cba=`<optgroup label="Córdoba · T10">${o(T10_CBA)}</optgroup>`;
-  const r=REGIONES[S.game]?regOf()[0]:"ba";return (r==="cba"?cba+ba:ba+cba)+`<optgroup label="Otros clubes">${o(OTROS_CLUBES)}</optgroup>`}
+  const usados=new Set([...DIVS,...PRIMERA_A,...T10_CBA]);
+  return `<optgroup label="Buenos Aires · T14">${o(DIVS)}</optgroup><optgroup label="Buenos Aires · 1A">${o(PRIMERA_A)}</optgroup><optgroup label="Córdoba · T10">${o(T10_CBA)}</optgroup><optgroup label="Otros clubes">${o(OTROS_CLUBES.filter(d=>!usados.has(d)))}</optgroup>`}
 /* la tabla de tu club solo aparece en la región de tu club (un club de Córdoba no tiene tabla en Buenos Aires y al revés) */
 function clubRegion(c){return typeof T10_CBA!=="undefined"&&T10_CBA.includes(c)?"cba":"ba"}
 function myClubTableHere(){const c=myClubSaved();if(!hasClubTable(c))return false;const r=typeof regOf==="function"&&REGIONES[S.game]?regOf()[0]:"ba";return clubRegion(c)===r}

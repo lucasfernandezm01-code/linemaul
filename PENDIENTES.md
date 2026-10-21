@@ -34,7 +34,7 @@
 
 ## Hecho reciente
 - [x] Clubes del T10 confirmados y camisetas de los 10
-- [x] Elegir club: grupos por región (tu región primero) y tabla de tu club solo en la región de tu club
+- [x] Elegir club: grupos T14, 1A y T10 y tabla de tu club solo en la región de tu club
 - [x] Inicio por regiones (acordeón) y Prode por región: Buenos Aires (T14 y 1A) y Córdoba (T10, con Llave del try)
 - [x] Arreglo: el primer toque después de escribir la diferencia del prode ya no se pierde
 - [x] Buzón de sugerencias (inicio → Panel Admin → Buzón), SQL 08 corrido y probado
