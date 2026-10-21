@@ -1285,7 +1285,7 @@ function openLigaSheet(){const el=$("#sheet");el.hidden=false;sheetRole="liga";
     <div class="hd"><div class="row" style="justify-content:space-between"><h2>Torneo privado</h2><button class="btn sm" id="closeSheet">Cerrar</button></div><div class="small muted">${S.game==="prode"?"Una tabla aparte del Prode solo con tus amigos o tu grupo. Se usan los mismos pronósticos y puntos.":"Una tabla aparte del Fantasy solo con tus amigos o tu grupo. Se usa el mismo XV y los mismos puntos."}</div></div>
     <div class="list" style="padding:16px;display:flex;flex-direction:column;gap:18px">
       <div class="card"><h3>Unirme con un código</h3><div class="row"><input type="text" id="joinCode" maxlength="6" placeholder="Ej: K7P2QX" autocapitalize="characters" autocomplete="off" style="flex:1 1 140px;text-transform:uppercase;letter-spacing:.2em"><button class="btn primary" id="doJoin">Unirme</button></div></div>
-      <div class="card"><h3>Crear uno nuevo</h3><div class="row"><input type="text" id="newLiga" maxlength="30" placeholder="Ej: Los del asado" style="flex:1 1 180px"><button class="btn primary" id="doCreate">Crear</button></div>${S.game==="prode"?`<div><b class="small">¿Qué competencias suman?</b><div class="row" style="gap:12px;margin-top:6px">${PR_COMPS.filter(([k])=>regComps().includes(k)).map(([k,n])=>`<label class="row" style="gap:6px;flex-wrap:nowrap;font-weight:600"><input type="checkbox" data-lcomp="${k}" checked style="width:20px;height:20px;accent-color:var(--accent)">${n}</label>`).join("")}</div>${regComps().includes(LLAVE_COMP)?"":"<!--"}<label class="row" style="gap:8px;flex-wrap:nowrap;font-weight:600;margin-top:12px"><input type="checkbox" id="lLlave" checked style="width:20px;height:20px;accent-color:var(--accent)">Jugar con Llave del try (T14)</label>${regComps().includes(LLAVE_COMP)?"":"-->"}<p class="small muted" style="margin:6px 0 0">Quedan fijas desde que creás el torneo. Si después querés otras, creá un torneo nuevo.</p></div>`:""}</div>
+      <div class="card"><h3>Crear uno nuevo</h3><div class="row"><input type="text" id="newLiga" maxlength="30" placeholder="Ej: Los del asado" style="flex:1 1 180px"><button class="btn primary" id="doCreate">Crear</button></div>${S.game==="prode"?`<div><b class="small">¿Qué competencias suman?</b><div class="row" style="gap:12px;margin-top:6px">${PR_COMPS.filter(([k])=>regComps().includes(k)).map(([k,n])=>`<label class="row" style="gap:6px;flex-wrap:nowrap;font-weight:600"><input type="checkbox" data-lcomp="${k}" checked style="width:20px;height:20px;accent-color:var(--accent)">${n}</label>`).join("")}</div>${hasLlaveC(regComps())?"":"<!--"}<label class="row" style="gap:8px;flex-wrap:nowrap;font-weight:600;margin-top:12px"><input type="checkbox" id="lLlave" checked style="width:20px;height:20px;accent-color:var(--accent)">Jugar con Llave del try</label>${hasLlaveC(regComps())?"":"-->"}<p class="small muted" style="margin:6px 0 0">Quedan fijas desde que creás el torneo. Si después querés otras, creá un torneo nuevo.</p></div>`:""}</div>
     </div></div></div>`}
 $("#sheet").addEventListener("click",async e=>{
   if(e.target.id==="doJoin"){const code=($("#joinCode").value||"").trim().toUpperCase();if(!code){toast("Escribí el código");return}
@@ -1295,7 +1295,7 @@ $("#sheet").addEventListener("click",async e=>{
     const mine=myLigas();if(mine.includes(code)){closeSheet();S.liga=code;render();return}
     try{await setLigas([...mine,code]);closeSheet();S.liga=code;S.tab=S.game==="prode"?"ptabla":"tabla";toast("Entraste a "+S.ligas[code].nombre);render()}catch(err){toast("No se pudo unir. Probá de nuevo.")}return}
   if(e.target.id==="doCreate"){const nombre=($("#newLiga").value||"").trim().slice(0,30);if(!nombre){toast("Ponele un nombre");return}
-    let comps=null;if(S.game==="prode"){comps=[...document.querySelectorAll("[data-lcomp]")].filter(x=>x.checked).map(x=>x.dataset.lcomp);if(!comps.length){toast("Elegí al menos una competencia");return}if(comps.includes(LLAVE_COMP)&&$("#lLlave")&&!$("#lLlave").checked)comps.push(SIN_LLAVE)}
+    let comps=null;if(S.game==="prode"){comps=[...document.querySelectorAll("[data-lcomp]")].filter(x=>x.checked).map(x=>x.dataset.lcomp);if(!comps.length){toast("Elegí al menos una competencia");return}if(hasLlaveC(comps)&&$("#lLlave")&&!$("#lLlave").checked)comps.push(SIN_LLAVE)}
     const code=newCode();const mineDoc=S.ligasOwn||{};const torneos=Object.assign({},mineDoc,{[code]:Object.assign({nombre,juego:S.game},comps?{comps}:{})});
     try{await S.db.doc("ligas/"+S.uid).set({torneos});S.ligas[code]={nombre,owner:S.uid,juego:S.game,comps};await setLigas([...myLigas(),code]);closeSheet();S.liga=code;S.tab=S.game==="prode"?"ptabla":"tabla";toast("Torneo creado. Código: "+code);render()}catch(err){toast("No se pudo crear. Probá de nuevo.")}return}
 });
@@ -1727,7 +1727,7 @@ async function recalcFecha(f){const rows=[];
     rows.push({user_id:r.user_id,juego:"dt",fecha_id:f.id,pts:teamFechaPts({fechas:{[f.id]:e}},f.id),extra:ex})}
   const pr=await sbAll("prode","user_id,data",q=>q.eq("fecha_id",f.id));const saved=S.prode;S.prode={};pr.forEach(r=>{S.prode[r.user_id]={fechas:{[f.id]:r.data||{}}}});
   try{for(const c of COMP_IDS){const ms=prPartidos(f,[c]);if(!ms.length)continue;for(const r of pr){const e=r.data||{};if(!ms.some(m=>e[m.id]&&e[m.id].w))continue;const x=prFechaPts(r.user_id,f,[c],true);rows.push({user_id:r.user_id,juego:c,fecha_id:f.id,pts:x.pts,extra:x.plenos.length?{pl:x.plenos.length}:{}})}}
-    if(prPartidos(f,[LLAVE_COMP]).length)for(const r of pr){const k=prFechaPts(r.user_id,f,[LLAVE_COMP]).llave;if(k>0)rows.push({user_id:r.user_id,juego:"llave",fecha_id:f.id,pts:k,extra:{}})}}
+    for(const lc of LLAVE_COMPS)if(prPartidos(f,[lc]).length)for(const r of pr){const k=prFechaPts(r.user_id,f,[lc]).llave;if(k>0)rows.push({user_id:r.user_id,juego:LLAVE_J[lc],fecha_id:f.id,pts:k,extra:{}})}}
   finally{S.prode=saved}
   let d=await sb.from("puntos").delete().eq("fecha_id",f.id);if(d.error)throw d.error;
   for(let i=0;i<rows.length;i+=500){const r=await sb.from("puntos").insert(rows.slice(i,i+500));if(r.error)throw r.error}
@@ -1866,8 +1866,10 @@ function regComps(){if(S.game!=="prode")return COMP_IDS.slice();const r=regOf("p
 /* Llave del try: solo T14. En cada partido elegís un jugador de cualquiera de los dos equipos; si hace try, +1.
    Se guarda como juego "llave" en puntos. La tabla general la suma; un torneo privado puede jugarse sin llave (marca "sinllave" en comps). */
 const PR_LLAVE=1,LLAVE_COMP="top14",SIN_LLAVE="sinllave";
+/* competencias con llave y el juego donde se guardan sus puntos (cada región por separado) */
+const LLAVE_J={top14:"llave",cba:"llave_cba"};const LLAVE_COMPS=Object.keys(LLAVE_J);const hasLlaveC=cs=>cs.some(c=>LLAVE_J[c]);
 function sinLlaveL(L){return !!(L&&Array.isArray(L.comps)&&L.comps.includes(SIN_LLAVE))}
-function tablaJuegos(comps,L){return comps.includes(LLAVE_COMP)&&!sinLlaveL(L)?comps.concat("llave"):comps}
+function tablaJuegos(comps,L){return sinLlaveL(L)?comps:comps.concat(comps.filter(c=>LLAVE_J[c]).map(c=>LLAVE_J[c]))}
 const PRIMERA_A=["Champagnat","Curupaytí","Deportiva Francesa","GEBA","Hurling","Lomas Athletic","Olivos","Pucará","Pueyrredón","San Albano","San Andrés","San Cirano","San Fernando","Universitario de La Plata"];
 /* T10 de Córdoba (lista 2025; confirmar 2026) */
 const T10_CBA=["Carlos Paz","Córdoba Athletic","Jockey Club Córdoba","Jockey Villa María","La Tablada","Palermo Bajo","San Martín","Tala","Universitario Córdoba","Urú Curé"];
@@ -1885,7 +1887,7 @@ function prPts(p,r){if(!p||!p.w||!r)return null;const diff=r.l-r.v;
   if(p.w==="E")return diff===0?PR_EMPATE:0;if(diff===0)return 0;
   const win=diff>0?"L":"V";if(p.w!==win)return 0;if(!(+p.d>0))return PR_GANADOR;const e=prErr(p,r);
   return e===0?PR_EXACTO:e<=5?PR_CERCA:e<=10?PR_MEDIO:PR_GANADOR}
-function hasLlave(m){return compOf(m)===LLAVE_COMP}
+function hasLlave(m){return !!LLAVE_J[compOf(m)]}
 /* null = sin elegir o sin resultado; si no, los puntos (PR_LLAVE o 0) */
 function llavePts(f,m,p){if(!p||!p.k||!hasLlave(m)||!prMarc(f,m.id))return null;const st=(f.stats||{})[p.k];return st&&+st.t>0?PR_LLAVE:0}
 const KEY_SVG=`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="7.5" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 12h9M18 12v3.5M21 12v2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
@@ -1920,7 +1922,7 @@ function prCard(f,m,editable){const p=S.prDraft[m.id]||{};const r=prMarc(f,m.id)
       const why=!p.w?"Sin pronóstico":pts===PR_EMPATE&&p.w==="E"?"Empate acertado":pts===0?"Erraste el ganador":pts===PR_EXACTO?"Exacto":(+p.d>0?`Erraste por ${prErr(p,r)}`:"Ganador");
       return `<div class="prres"><div class="prbox"><span>Pusiste</span><b>${mine}</b></div><div class="prbox"><span>Fue</span><b>${real}</b></div><div class="prbox pts ${pts>0?"pos":"zero"}"><span>Sumás</span><b class="num">${pts>0?"+":""}${pts||0}</b><small>${why}</small></div></div>`})():""}
   </div>`}
-function llaveRow(f,m,p,editable){const q=p.k&&S.plantel[p.k];const fin=f.estado==="final"&&prMarc(f,m.id);
+function llaveRow(f,m,p,editable){const q=p.k&&S.plantel[p.k];if(!q&&!Object.values(S.plantel).some(x=>x.d===m.l||x.d===m.v))return "";const fin=f.estado==="final"&&prMarc(f,m.id);
   if(fin){const k=llavePts(f,m,p);return `<div class="llave res${k?" ok":""}"><span class="lk">${KEY_SVG}</span><span class="lt"><small>Llave del try</small><b>${q?esc(q.n):"No elegiste"}</b></span><span class="lr">${q?(k?"Hizo try":"Sin try"):""}</span><b class="num lp">${k?"+"+k:"0"}</b></div>`}
   return `<button class="llave${q?" set":""}" data-llave="${esc(m.id)}" ${editable?"":"disabled"}><span class="lk">${KEY_SVG}</span><span class="lt"><small>Llave del try · +${PR_LLAVE}</small><b>${q?esc(q.n):editable?"Elegí un jugador":"Sin elegir"}</b></span>${q?`<span class="pkit sm"><svg viewBox="0 0 64 60" aria-hidden="true">${miniKit(q.d)}</svg></span>`:""}${editable?`<span class="lgo">›</span>`:""}</button>`}
 function openLlaveSheet(mid){const f=S.fechas.find(x=>x.id===S.prFecha);const m=f&&prPartidos(f).find(x=>x.id===mid);if(!m)return;const cur=(S.prDraft[mid]||{}).k;
@@ -2006,7 +2008,7 @@ function renderPTabla(){
   const comps=L?((L.comps&&L.comps.length?L.comps:["top14"]).filter(c=>COMP_N[c])):[S.ptComp];
   const mineBar=mineC.length?`<div class="seg" role="group" aria-label="Mis competencias">${mineC.map(c=>`<button data-ptcomp="${c}" aria-pressed="${!viewOnly&&c===S.ptComp}">${esc(COMP_N[c])}</button>`).join("")}</div>`:"";
   const otherBar=otherC.length?`<div class="othc"><span class="small muted">Otras competencias · solo para ver</span><div class="row" style="gap:6px;flex-wrap:wrap">${otherC.map(c=>`<button class="chip ghost" data-ptcomp="${c}" aria-pressed="${c===S.ptComp}">👀 ${esc(COMP_N[c])}</button>`).join("")}</div></div>`:"";
-  const compBar=L?`<div class="banner small">Suman: <b style="font-family:var(--body);font-size:14px;text-transform:none">${comps.map(c=>esc(COMP_N[c])).join(" + ")}</b>${comps.includes(LLAVE_COMP)?` · ${sinLlaveL(L)?"Sin":"Con"} Llave del try`:""}</div>`
+  const compBar=L?`<div class="banner small">Suman: <b style="font-family:var(--body);font-size:14px;text-transform:none">${comps.map(c=>esc(COMP_N[c])).join(" + ")}</b>${hasLlaveC(comps)?` · ${sinLlaveL(L)?"Sin":"Con"} Llave del try`:""}</div>`
     :viewOnly?`<div class="banner small" style="justify-content:space-between;gap:10px;flex-wrap:wrap"><span>👀 <b style="font-family:var(--body);font-size:14px;text-transform:none">${esc(COMP_N[S.ptComp])}</b> · Solo para ver: no jugás esta competencia. Para sumarte, elegila en Mi Prode.</span>${mineC.length?`<button class="btn sm" data-ptcomp="${mineC[0]}">Volver a mis tablas</button>`:""}</div>`:"";
   const ptHead=viewOnly?`${otherBar}${compBar}`:`${L?"":mineBar}${bar}${compBar}${L?"":otherBar}`;
   const cfs=fs.filter(f=>prPartidos(f,comps).length);const cfins=cfs.filter(f=>f.estado==="final");
@@ -2070,13 +2072,13 @@ $("#view").addEventListener("click",e=>{
 function renderPReglas(){
   $("#view").innerHTML=`<section class="view">
     <div><h2 style="margin-bottom:10px">Cómo se suman puntos</h2>
-    <div class="pts-grid"><div class="k"><span>Diferencia exacta</span><b class="num pos">+${PR_EXACTO}</b></div><div class="k"><span>Errás por 5 o menos</span><b class="num pos">+${PR_CERCA}</b></div><div class="k"><span>Errás por 6 a 10</span><b class="num pos">+${PR_MEDIO}</b></div><div class="k"><span>Errás por más de 10</span><b class="num pos">+${PR_GANADOR}</b></div><div class="k"><span>Empate exacto</span><b class="num pos">+${PR_EMPATE}</b></div><div class="k"><span>Pleno de fecha</span><b class="num pos">+${PR_PLENO}</b></div>${regComps().includes(LLAVE_COMP)?`<div class="k"><span>Llave del try</span><b class="num pos">+${PR_LLAVE}</b></div>`:""}<div class="k"><span>Errar ganador</span><b class="num">0</b></div></div></div>
+    <div class="pts-grid"><div class="k"><span>Diferencia exacta</span><b class="num pos">+${PR_EXACTO}</b></div><div class="k"><span>Errás por 5 o menos</span><b class="num pos">+${PR_CERCA}</b></div><div class="k"><span>Errás por 6 a 10</span><b class="num pos">+${PR_MEDIO}</b></div><div class="k"><span>Errás por más de 10</span><b class="num pos">+${PR_GANADOR}</b></div><div class="k"><span>Empate exacto</span><b class="num pos">+${PR_EMPATE}</b></div><div class="k"><span>Pleno de fecha</span><b class="num pos">+${PR_PLENO}</b></div>${hasLlaveC(regComps())?`<div class="k"><span>Llave del try</span><b class="num pos">+${PR_LLAVE}</b></div>`:""}<div class="k"><span>Errar ganador</span><b class="num">0</b></div></div></div>
     <div class="card"><h3>Reglas del Prode</h3><ul class="rules">
       ${regComps().length>1?`<li>En ${esc(regOf("prode")[1])} hay ${regComps().length} competencias: <b>${regComps().map(c=>COMP_N[c]).join("</b> y <b>")}</b>. Jugás las que quieras: las elegís arriba de tus pronósticos.</li>`:`<li>En ${esc(regOf("prode")[1])} se juega el <b>${esc(COMP_N[regComps()[0]]||"")}</b>.</li>`}
       <li>En cada partido elegís quién gana y por cuántos puntos, o empate.</li>
       <li>Si acertás el ganador, sumás según qué tan cerca estuviste de la diferencia: exacta <b>${PR_EXACTO}</b>, errás por 5 o menos <b>${PR_CERCA}</b>, por 6 a 10 <b>${PR_MEDIO}</b>, por más de 10 <b>${PR_GANADOR}</b>.</li>
       <li>Si te la jugás al empate y sale empate, sumás <b>${PR_EMPATE}</b>. Si no sale, 0.</li>
-      ${regComps().includes(LLAVE_COMP)?"":"<!--"}<li><b>Llave del try</b> (solo T14): en cada partido elegís un jugador de cualquiera de los dos equipos. Si hace try, sumás <b>+${PR_LLAVE}</b>; si no, 0. Cuenta para la tabla general. En los torneos privados, el que lo crea elige si se juega con o sin llave.</li>${regComps().includes(LLAVE_COMP)?"":"-->"}
+      ${hasLlaveC(regComps())?"":"<!--"}<li><b>Llave del try</b>${regComps().includes("a")?" (solo T14)":""}: en cada partido elegís un jugador de cualquiera de los dos equipos. Si hace try, sumás <b>+${PR_LLAVE}</b>; si no, 0. Cuenta para la tabla general. En los torneos privados, el que lo crea elige si se juega con o sin llave.</li>${hasLlaveC(regComps())?"":"-->"}
       <li><b>Pleno de fecha:</b> si acertás el ganador (o el empate) de todos los partidos de una competencia, +${PR_PLENO} en esa competencia.</li>
       <li>Cada competencia tiene su propia tabla, y dentro de cada una, la tabla de tu club. No hay una tabla que sume todas.</li>
       <li><b>¿Querés jugar varias competencias juntas?</b> Armá un torneo privado con tus amigos y elegí qué competencias suman. Quedan fijas desde que lo creás; si querés cambiarlas, creá otro torneo.</li>

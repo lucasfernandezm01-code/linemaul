@@ -33,7 +33,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
-- [x] Inicio por regiones (acordeón) y Prode por región: Buenos Aires (T14 y 1A) y Córdoba (T10)
+- [x] Inicio por regiones (acordeón) y Prode por región: Buenos Aires (T14 y 1A) y Córdoba (T10, con Llave del try)
 - [x] Arreglo: el primer toque después de escribir la diferencia del prode ya no se pierde
 - [x] Buzón de sugerencias (inicio → Panel Admin → Buzón), SQL 08 corrido y probado
 - [x] Inicio: orden Instalala → Notificaciones → Buzón
