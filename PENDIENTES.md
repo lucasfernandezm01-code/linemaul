@@ -7,7 +7,7 @@
 ## Antes de febrero
 - [ ] Fantasy por región: Córdoba (T10). Hoy figura "Próximamente" en el inicio
 - [ ] Prode Tucumán y Litoral: clubes, nombre del torneo y camisetas (hoy "Próximamente")
-- [ ] Confirmar clubes del T10 2026 (cargué la lista 2025) y camisetas que faltan (hechas: Córdoba Athletic, Tala, Jockey Córdoba)
+- [ ] Confirmar clubes del T10 2026 (cargué la lista 2025) y camisetas que faltan (faltan: La Tablada, Universitario, Urú Curé, Carlos Paz)
 - [ ] Logos de los prodes nuevos (Lucas)
 - [ ] Planteles y resultados de Córdoba (T10): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
 - [ ] Carga automática de resultados para los prodes
