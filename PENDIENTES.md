@@ -1,8 +1,7 @@
 # Line & Maul · lista de pendientes (actualizada 21/10/2026)
 
 ## Ahora (hoy, después de comer)
-- [ ] Planteles T10 que faltan: La Tablada y Universitario (hechos los otros 8)
-- [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre)
+- [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre); La Tablada → ¿quién jugó de 14? (no figura) y "Calos" Molina Martínez (puse Carlos); JCVM → Simón Iglesias y Mateo Carando (vienen al revés)
 
 ## Nuevas funciones
 - [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
@@ -36,6 +35,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Planteles de los 10 clubes del T10 (novedades cba-planteles-*)
 - [x] Fantasy Córdoba (T10): XV, jugadores, tabla, torneos y reglas propias (sin MOTM). Lucas corre supabase/09_fantasy_regiones.sql
 - [x] Clubes del T10 confirmados y camisetas de los 10
 - [x] Elegir club: grupos T14, 1A y T10 y tabla de tu club solo en la región de tu club
