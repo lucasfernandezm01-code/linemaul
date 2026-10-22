@@ -35,6 +35,9 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Resumen Total: participación por fin de semana y más elegidos solo por temporada · posteos: "clavó" en singular
+- [x] Revisión general: recorrido automático por todo el sitio (Fantasy y Prode de las 2 regiones, tablas, torneos, Panel Admin completo) sin errores
+- [x] Arreglo: el recálculo de puntos ahora incluye siempre todas las regiones
 - [x] Elegir jugador: titulares primero, después por club y nombre (A-Z)
 - [x] Aclaración al elegir club (tabla de tu club) · Córdoba: 4 por club · apellidos en camisetas de Córdoba
 - [x] Panel Admin → Resumen con solapas Buenos Aires / Córdoba / Total (SQL 10)

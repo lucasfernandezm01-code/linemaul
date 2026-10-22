@@ -1170,7 +1170,7 @@ async function buildProno(o){const {c,ctx,W}=await cardBase("PRODE · "+o.comp.t
     if(m.res){ctx.textAlign="center";ctx.fillStyle="#fff";ctx.font='800 40px "Saira Condensed",sans-serif';ctx.fillText(m.res,W/2,nameY+2)}
     const bx=66,bw=W-132;ctx.save();rr(ctx,bx,barY,bw,bh,bh/2);ctx.clip();ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(bx,barY,bw,bh);
     ctx.fillStyle="#f2c21a";ctx.fillRect(bx,barY,bw*m.lp/100,bh);ctx.fillStyle="rgba(255,255,255,.35)";ctx.fillRect(bx+bw*m.lp/100,barY,bw*m.ep/100,bh);ctx.fillStyle="#56c98b";ctx.fillRect(bx+bw*(m.lp+m.ep)/100,barY,bw*m.vp/100,bh);ctx.restore();
-    ctx.textAlign="center";ctx.font='600 22px "Barlow",sans-serif';ctx.fillStyle="rgba(255,255,255,.7)";ctx.fillText(m.res?`Acertó el ${m.ok}%${m.ex?` · ${m.ex} clavaron la diferencia`:""}${m.ep?` · Empate ${m.ep}%`:""}`:(m.ep?`Empate ${m.ep}%`:"Sin resultado"),W/2,barY+bh+26)});
+    ctx.textAlign="center";ctx.font='600 22px "Barlow",sans-serif';ctx.fillStyle="rgba(255,255,255,.7)";ctx.fillText(m.res?`Acertó el ${m.ok}%${m.ex?` · ${m.ex} ${m.ex==1?"clavó":"clavaron"} la diferencia`:""}${m.ep?` · Empate ${m.ep}%`:""}`:(m.ep?`Empate ${m.ep}%`:"Sin resultado"),W/2,barY+bh+26)});
   cardFoot(ctx,W,"JUGÁ EL PRODE EN LINE & MAUL");return c}
 function prVotosMatches(f,rows,comp){const by={};for(const r of rows){const m=by[r.partido]||(by[r.partido]={L:{n:0,d:{}},V:{n:0,d:{}},E:{n:0}});const n=+r.n||0;m[r.w].n+=n;if(r.w!=="E")m[r.w].d[+r.d||0]=(m[r.w].d[+r.d||0]||0)+n}
   const pc=(a,b)=>b?Math.round(a*100/b):0;
@@ -1654,10 +1654,10 @@ const MCACHE={};
 function mFetch(name,args){const k=name+JSON.stringify(args);let o=MCACHE[k];if(o&&(o.loading||Date.now()-o.at<60000))return o;o=o||{};o.loading=true;MCACHE[k]=o;
   sb.rpc(name,args).then(({data,error})=>{o.loading=false;o.at=Date.now();o.err=error?error.message:null;if(!error)o.data=data;scheduleRender()},()=>{o.loading=false;o.at=Date.now();o.err="red";scheduleRender()});return o}
 function mCur(){const fs=sortedFechas().filter(f=>f.estado!=="proxima");return fs.length?(S.fechas.find(x=>x.id===defaultFecha())||fs[fs.length-1]):null}
-function mPlayersHtml(){const scope=S.mScope||"fecha";const cur=mCur();const fids=scope==="fecha"&&cur?[cur.id]:sortedFechas().filter(f=>f.estado!=="proxima").map(f=>f.id);
+function mPlayersHtml(){const isAll=(S.mReg||"ba")==="all"&&S.game==="admin";const scope=isAll?"temp":(S.mScope||"fecha");const cur=mCur();const fids=scope==="fecha"&&cur?[cur.id]:sortedFechas().filter(f=>f.estado!=="proxima").map(f=>f.id);
   const M=mFetch("mas_elegidos",{p_fids:fids});const D=M.data;const view=S.mView||"general";
   const chip=(attr,k,n,c)=>`<button class="chip" data-${attr}="${k}" aria-pressed="${c===k}">${n}</button>`;
-  const headH=`<div class="card"><h3>Jugadores más elegidos</h3><div class="chips" role="group">${chip("mscope","fecha",cur?esc(cur.nombre):"Fecha actual",scope)}${chip("mscope","temp","Toda la temporada",scope)}</div>
+  const headH=`<div class="card"><h3>Jugadores más elegidos</h3>${isAll?`<p class="small muted" style="margin:0">Toda la temporada (Buenos Aires y Córdoba).</p>`:`<div class="chips" role="group">${chip("mscope","fecha",cur?esc(cur.nombre):"Fecha actual",scope)}${chip("mscope","temp","Toda la temporada",scope)}</div>`}
   <div class="chips" role="group">${chip("mview","general","General",view)}${chip("mview","puesto","Por puesto",view)}${chip("mview","club","Por club",view)}</div>`;
   if(!D)return headH+`<p class="small muted" style="margin:0">${M.err?"No se pudo cargar.":"Cargando…"}</p></div>`;
   const teams=+D.teams||0;const cnt={},byG={};for(const [k,n] of Object.entries(D.slot||{})){const [sl,pid]=k.split("|");if(!S.plantel[pid])continue;cnt[pid]=(cnt[pid]||0)+n;const g=SLOT_GROUP[+sl];if(g){(byG[g]=byG[g]||{})[pid]=(byG[g][pid]||0)+n}}
@@ -1700,12 +1700,17 @@ function adminMetricas(){const cur=mCur();const M=mFetch("metricas_reg",mArgs(cu
   const regTabs=`<div class="seg" role="group" aria-label="Región" style="align-self:stretch;display:flex">${M_REGS.map(([k,n])=>`<button data-mreg="${k}" aria-pressed="${(S.mReg||"ba")===k}" style="flex:1">${n}</button>`).join("")}</div>`;
   if(!D)return regTabs+`<div class="card"><p class="muted" style="margin:0">${M.err?"No se pudieron cargar las métricas. ¿Corriste el SQL 10 en Supabase?":"Cargando métricas…"}</p></div>`;
   const U=+D.users||0;const pc=(a,b)=>b?Math.round(a*100/b)+"%":"–";const pf=D.por_fecha||{};
-  const curXV=cur&&pf[cur.id]?pf[cur.id][0]:0,curPr=cur&&pf[cur.id]?pf[cur.id][1]:0;
+  let curXV=cur&&pf[cur.id]?pf[cur.id][0]:0,curPr=cur&&pf[cur.id]?pf[cur.id][1]:0,curLab=cur?cur.nombre:"";
   const card=(v,l,sub)=>`<div class="mcard"><b class="num">${v}</b><span>${l}</span>${sub?`<small>${sub}</small>`:""}</div>`;
   const wk=(D.weeks||[]).slice().reverse();const mx=Math.max(1,...wk);let acc=U-wk.reduce((a,n)=>a+n,0);const now=Date.now();
   const bars=wk.map((n,i)=>{acc+=n;const d=new Date(now-(9-i)*7*864e5);return `<div class="mbar" title="${n} nuevos · ${acc} en total"><span class="num">${n||""}</span><i style="height:${Math.round(n/mx*100)}%"></i><small>${d.getDate()}/${d.getMonth()+1}</small></div>`}).join("");
-  const fs=sortedFechas().filter(f=>f.estado!=="proxima");
-  const fRows=fs.slice(-12).reverse().map(f=>{const x=pf[f.id]||[0,0];return `<tr><td>${esc(f.nombre)}</td><td class="r num">${x[0]}</td><td class="r num">${x[1]}</td><td class="r num muted">${pc(Math.max(x[0],x[1]),U)}</td></tr>`}).join("");
+  const fs=sortedFechas().filter(f=>f.estado!=="proxima");const isAll=(S.mReg||"ba")==="all";
+  /* en Total se agrupa por fin de semana (los números de fecha de cada torneo no coinciden) */
+  const wkKey=f=>{const t=Date.parse(f.cierra||f.abre||"")||+f.orden||0;const d=new Date(t-3*36e5);const w=d.getUTCDay();d.setUTCDate(d.getUTCDate()+(w>=4?6-w:-(w+1)));return d.toISOString().slice(0,10)};
+  const wkLab=k=>{const d=new Date(k+"T12:00:00Z");return "Finde del "+d.getUTCDate()+"/"+(d.getUTCMonth()+1)};
+  const groups=[];if(isAll){const m={};for(const f of fs){const k=wkKey(f);if(!m[k]){m[k]={lab:wkLab(k),ids:[]};groups.push(m[k])}m[k].ids.push(f.id)}}else fs.forEach(f=>groups.push({lab:f.nombre,ids:[f.id]}));
+  const gSum=g=>g.ids.reduce((a,id)=>{const x=pf[id]||[0,0];return [a[0]+x[0],a[1]+x[1]]},[0,0]);
+  const fRows=groups.slice(-12).reverse().map(g=>{const x=gSum(g);return `<tr><td>${esc(g.lab)}</td><td class="r num">${x[0]}</td><td class="r num">${x[1]}</td><td class="r num muted">${isAll?"":pc(Math.max(x[0],x[1]),U)}</td></tr>`}).join("");
   const clubs=Object.entries(D.clubs||{}).sort((a,b)=>b[1]-a[1]);
   const RN=mFetch("nombres_reales",{p_ids:(D.recent||[]).map(u=>u.id)});const rn={};(RN.data||[]).forEach(x=>{rn[x.id]=x});
   const uRows=(D.recent||[]).map(u=>{const sn=u.creado?Date.parse(u.creado):null;const x=rn[u.id]||{};const real=(x.nombre_real||"").trim();
@@ -1713,9 +1718,9 @@ function adminMetricas(){const cur=mCur();const M=mFetch("metricas_reg",mArgs(cu
   const ligas=(D.ligas||[]).sort((a,b)=>b.n-a.n);
   const lRows=ligas.map(x=>`<tr><td>${esc(x.nombre)}<div class="small muted">${x.juego==="prode"?"Prode":"Fantasy"} · ${esc(x.owner||"")}</div></td><td class="num">${esc(x.code)}</td><td class="r num">${x.n}</td></tr>`).join("");
   return `${regTabs}<div class="mgrid">${card(U,"Registrados",`+${D.new7||0} esta semana · +${D.new30||0} en 30 días`)}${card(D.xv_ever||0,"Jugaron Fantasy",pc(D.xv_ever||0,U)+" de los registrados")}${card(D.pr_ever||0,"Jugaron Prode",pc(D.pr_ever||0,U)+" de los registrados")}${card(ligas.length,"Torneos privados",ligas.reduce((a,x)=>a+(+x.n||0),0)+" participaciones")}</div>
-  ${cur?`<div class="card"><h3>${esc(cur.nombre)} (actual)</h3><div class="mgrid">${card(curXV,"XV armados",pc(curXV,U))}${card(curPr,"Prodes",pc(curPr,U))}</div></div>`:""}
+  ${(()=>{if(isAll&&cur){const g=groups.find(x=>x.ids.includes(cur.id));if(g){[curXV,curPr]=gSum(g);curLab=g.lab}}return ""})()}${cur?`<div class="card"><h3>${esc(curLab)} (actual)</h3><div class="mgrid">${card(curXV,"XV armados",pc(curXV,U))}${card(curPr,"Prodes",pc(curPr,U))}</div></div>`:""}
   <div class="card"><h3>Nuevos usuarios por semana</h3><div class="mbars">${bars}</div><p class="small muted" style="margin:6px 0 0">Últimas 10 semanas. Pasá el dedo o el mouse por cada barra para ver el total acumulado.</p></div>
-  ${fRows?`<div class="card"><h3>Participación por fecha</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="r">Fantasy</th><th class="r">Prode</th><th class="r">Activos</th></tr></thead><tbody>${fRows}</tbody></table></div></div>`:""}
+  ${fRows?`<div class="card"><h3>Participación por ${isAll?"fin de semana":"fecha"}</h3><div class="tbl-wrap"><table><thead><tr><th>${isAll?"Fin de semana":"Fecha"}</th><th class="r">Fantasy</th><th class="r">Prode</th><th class="r">Activos</th></tr></thead><tbody>${fRows}</tbody></table></div></div>`:""}
   ${clubs.length?`<div class="card"><h3>Usuarios por club</h3><div class="mclubs">${clubs.map(([c,n])=>`<div><span>${esc(c)}</span><b class="num">${n}</b></div>`).join("")}</div></div>`:""}
   ${(S.mReg||"ba")==="all"?"":mPostsHtml()}
   ${mPlayersHtml()}
