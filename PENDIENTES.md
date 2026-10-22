@@ -1,5 +1,9 @@
 # Line & Maul · lista de pendientes (actualizada 21/10/2026)
 
+## Ahora (hoy, después de comer)
+- [ ] Planteles T10 que faltan: La Tablada, Universitario, Jockey Villa María y Carlos Paz (hechos: Tala, Córdoba Athletic, San Martín, Jockey Córdoba, Palermo Bajo, Urú Curé)
+- [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre)
+
 ## Nuevas funciones
 - [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
@@ -7,8 +11,6 @@
 ## Antes de febrero
 - [ ] Prode Tucumán y Litoral: clubes, nombre del torneo y camisetas (hoy "Próximamente")
 - [ ] Planteles y resultados de Córdoba (T10): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
-- [ ] Planteles T10 que faltan: La Tablada, Universitario, Jockey Villa María y Carlos Paz (hechos: Tala, Córdoba Athletic, San Martín, Jockey Córdoba, Palermo Bajo, Urú Curé)
-- [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre)
 - [ ] Carga automática de resultados para los prodes
 - [ ] Mejorar la estética de los posteos
 - [ ] Prueba general automática de todo el sitio (Fantasy, Prode por región, tablas, torneos, admin, buzón, notificaciones)
