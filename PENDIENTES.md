@@ -35,6 +35,10 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Elegir jugador: titulares primero, después por club y nombre (A-Z)
+- [x] Aclaración al elegir club (tabla de tu club) · Córdoba: 4 por club · apellidos en camisetas de Córdoba
+- [x] Panel Admin → Resumen con solapas Buenos Aires / Córdoba / Total (SQL 10)
+- [x] Arreglo: Partidos y resultados y camisetas del Prode desde el Panel Admin (no cambiaba de competencia)
 - [x] Planteles de los 10 clubes del T10 (novedades cba-planteles-*)
 - [x] Fantasy Córdoba (T10): XV, jugadores, tabla, torneos y reglas propias (sin MOTM). Lucas corre supabase/09_fantasy_regiones.sql
 - [x] Clubes del T10 confirmados y camisetas de los 10
