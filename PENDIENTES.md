@@ -1,7 +1,7 @@
 # Line & Maul · lista de pendientes (actualizada 21/10/2026)
 
 ## Ahora (hoy, después de comer)
-- [ ] Planteles T10 que faltan: La Tablada, Universitario, Jockey Villa María y Carlos Paz (hechos: Tala, Córdoba Athletic, San Martín, Jockey Córdoba, Palermo Bajo, Urú Curé)
+- [ ] Planteles T10 que faltan: La Tablada y Universitario (hechos los otros 8)
 - [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre)
 
 ## Nuevas funciones
