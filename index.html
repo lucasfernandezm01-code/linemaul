@@ -1184,7 +1184,7 @@ async function postBuilders(n,f){const fins=finalFechas();const lab=f.nombre;con
   if(n==="2"){const rows=await PD_votos(f.id);return regComps().map(c=>{const ms=prVotosMatches(f,rows,c);return ms.length?["pronosticos-"+c,()=>buildProno({comp:COMP_N[c],sub:lab,matches:ms})]:null}).filter(Boolean)}
   if(n==="3"){const ff=topReal(f.stats||{},10),tt=topReal(sumStats(fins),10);const row=([pid,v,st])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+(realDet(st)?" · "+realDet(st):""),club:p.d,val:v}};
     const Pf=await PD_picks([f.id]),Pt=await PD_picks(fins.map(x=>x.id));const prow=P=>([pid,k])=>{const p=S.plantel[pid];return {name:p.n,sub:shortClub(p.d)+" · "+posNames(p),club:p.d,val:pc(k,P.teams)}};
-    return [["mejores-jugadores",()=>buildTwoCol({eyebrow:"FANTASY RUGBY · SIN PATADAS",title:"LOS MEJORES",sub:lab,cols:[{h:"La fecha",rows:ff.map(row)},{h:"La temporada",rows:tt.map(row)}],foot:"PUNTOS LINE & MAUL · TRIES, TRY DE ORO, MOTM Y TARJETAS"})],
+    return [["mejores-jugadores",()=>buildTwoCol({eyebrow:"FANTASY RUGBY · SIN PATADAS",title:"LOS MEJORES",sub:lab,cols:[{h:"La fecha",rows:ff.map(row)},{h:"La temporada",rows:tt.map(row)}],foot:fRegId()==="cba"?"PUNTOS LINE & MAUL · TRIES, TRY DE ORO Y TARJETAS":"PUNTOS LINE & MAUL · TRIES, TRY DE ORO, MOTM Y TARJETAS"})],
       ["mas-elegidos",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"LOS MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cnt,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cnt,10).map(prow(Pt))}]})],
       ["capitanes",()=>buildTwoCol({eyebrow:"FANTASY RUGBY",title:"CAPITANES MÁS ELEGIDOS",sub:lab,cols:[{h:"La fecha",rows:topObj(Pf.cap,10).map(prow(Pf))},{h:"La temporada",rows:topObj(Pt.cap,10).map(prow(Pt))}]})]]}
   if(n==="4"){const games=[["Fantasy",[fJuego()]],...regComps().filter(c=>prFechas().some(x=>prPartidos(x,[c]).length)).map(c=>["Prode "+COMP_N[c],tablaJuegos([c],null)])];
@@ -1733,7 +1733,8 @@ document.addEventListener("click",async e=>{if(e.target.id!=="mCopy")return;cons
 let _recalc=false,_recalcAgain=false;
 function fechaSig(f){const x=JSON.stringify([f.stats||{},f.res||{},f.bonus||{},f.marcador||{},f.partidos||[],S.pts,3]);let h=0;for(let i=0;i<x.length;i++)h=(h*31+x.charCodeAt(i))|0;return String(h>>>0)}
 async function autoRecalc(){if(!S.isOwner||!sb||!S.ready||!S.fechas.length)return;if(_recalc){_recalcAgain=true;return}_recalc=true;let did=0;
-  try{const fins=finalFechas();
+  /* todas las fechas publicadas, de todas las regiones (no depende de la solapa abierta) */
+  try{const fins=S.fechas.filter(f=>f.estado==="final").sort((a,b)=>(a.orden||0)-(b.orden||0));
     for(const f of S.fechas){if(f.estado!=="final"&&f.calc){await sb.from("puntos").delete().eq("fecha_id",f.id);await sb.from("insignias").delete().eq("fecha_id",f.id);await S.db.doc("fechas/"+f.id).update({calc:null});did++}}
     for(const f of fins){const sig=fechaSig(f);if(f.calc===sig)continue;await recalcFecha(f);await S.db.doc("fechas/"+f.id).update({calc:sig});did++}
     if(did){const fb=fins.filter(x=>fechaReg(x)==="ba");for(let i=0;i<fb.length;i++){const r=await sb.rpc("calc_insignias",{p_fid:fb[i].id,p_prev:fb.slice(0,i).map(x=>x.id)});if(r.error)throw r.error}
