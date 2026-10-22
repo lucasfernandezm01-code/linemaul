@@ -1623,7 +1623,7 @@ function renderReglas(){
       <li>Tampoco cuentan como transferencia completar un lugar vacío ni reemplazar a un jugador que dejó de estar en los planteles.</li>
     </ul></div>
     <div class="card"><h3>La fecha</h3><ul class="rules">
-      <li>Cada fecha abre el lunes a las 8:00 y cierra 5 minutos antes del primer partido (normalmente el sábado a las 15:25, porque arrancan 15:30). Si se juega otro día u otro horario, arriba de tu XV ves el cierre exacto. Hasta ese momento podés cambiar lo que quieras.</li>
+      ${fRegId()==="cba"?`<li>Cada fecha abre el lunes a las 8:00 y cierra el sábado a las 15:25. Si se juega otro día, arriba de tu XV ves el cierre exacto. Hasta ese momento podés cambiar lo que quieras.</li>`:`<li>Cada fecha abre el lunes a las 8:00 y cierra 5 minutos antes del primer partido (normalmente el sábado a las 15:25, porque arrancan 15:30). Si se juega otro día u otro horario, arriba de tu XV ves el cierre exacto. Hasta ese momento podés cambiar lo que quieras.</li>`}
       <li>Cuando se confirman las formaciones (los viernes), los <b style="color:#56c98b">titulares</b> de cada club aparecen con una marca verde.</li>
       <li>Mientras la fecha está abierta, los equipos de los demás quedan ocultos. Se ven cuando cierra.</li>
       <li>Al cierre se guarda un <b>registro</b> con el equipo de cada uno, y ese es el que suma. Si alguien lo cambia después del horario, el cambio vale recién para la fecha siguiente.</li>
@@ -2108,7 +2108,7 @@ function renderPReglas(){
       <li>Cada fecha cierra 5 minutos antes del primer partido (normalmente el sábado a las 15:25, porque arrancan 15:30). Mientras está abierta, los pronósticos de los demás quedan ocultos.</li>`
       :`<li><b>Pleno de fecha:</b> si acertás el ganador (o el empate) de todos los partidos de la fecha del ${esc(COMP_N[regComps()[0]])}, +${PR_PLENO}.</li>
       <li>El ${esc(COMP_N[regComps()[0]])} tiene su propia tabla, y dentro de ella, la tabla de tu club. También podés armar torneos privados con tus amigos.</li>
-      <li>Cada fecha cierra 5 minutos antes del primer partido (normalmente el sábado a las 15:25, porque arrancan 15:30). Mientras está abierta, los pronósticos de los demás quedan ocultos.</li>`}
+      <li>Cada fecha cierra el sábado a las 15:25. Mientras está abierta, los pronósticos de los demás quedan ocultos.</li>`}
       <li>El Prode y el Fantasy son juegos separados, con tablas y torneos privados propios.</li>
       ${regComps().includes("cba")?`<li>Ejemplo: pronosticás Tala por 7. Si gana Tala por 7, 5 pts. Por 3 o por 12, 3. Por 15, 2. Por 25, 1. Si gana La Tablada o empatan, 0.</li>`:`<li>Ejemplo: pronosticás CASI por 7. Si gana CASI por 7, 5 pts. Por 3 o por 12, 3. Por 15, 2. Por 25, 1. Si gana SIC o empatan, 0.</li>`}
     </ul></div>
