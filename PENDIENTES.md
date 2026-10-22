@@ -5,7 +5,6 @@
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
 
 ## Antes de febrero
-- [ ] Fantasy por región: Córdoba (T10). Hoy figura "Próximamente" en el inicio
 - [ ] Prode Tucumán y Litoral: clubes, nombre del torneo y camisetas (hoy "Próximamente")
 - [ ] Planteles y resultados de Córdoba (T10): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
 - [ ] Carga automática de resultados para los prodes
@@ -33,6 +32,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Fantasy Córdoba (T10): XV, jugadores, tabla, torneos y reglas propias (sin MOTM). Lucas corre supabase/09_fantasy_regiones.sql
 - [x] Clubes del T10 confirmados y camisetas de los 10
 - [x] Elegir club: grupos T14, 1A y T10 y tabla de tu club solo en la región de tu club
 - [x] Inicio por regiones (acordeón) y Prode por región: Buenos Aires (T14 y 1A) y Córdoba (T10, con Llave del try)
