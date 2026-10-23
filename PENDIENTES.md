@@ -1,8 +1,5 @@
 # Line & Maul · lista de pendientes (actualizada 23/10/2026)
 
-## Ahora
-- [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre); La Tablada → ¿quién jugó de 14? (no figura) y "Calos" Molina Martínez (puse Carlos); JCVM → Simón Iglesias y Mateo Carando (vienen al revés)
-
 ## Nuevas funciones
 - [ ] Redes: logo de Instagram abajo de todo que lleve al IG de Line & Maul (falta el usuario)
 - [ ] Juegos semanales con tabla propia: rotación Top 10 → Missing XV → Grid T14 → Trivia, máx. 100 pts por semana
@@ -35,6 +32,7 @@
 - [ ] Hockey
 
 ## Hecho reciente
+- [x] Nombres del T10 completos (Urú Curé, Palermo Bajo, La Tablada; JCVM confirmado)
 - [x] Resumen Total: participación por fin de semana y más elegidos solo por temporada · posteos: "clavó" en singular
 - [x] Revisión general: recorrido automático por todo el sitio (Fantasy y Prode de las 2 regiones, tablas, torneos, Panel Admin completo) sin errores
 - [x] Arreglo: el recálculo de puntos ahora incluye siempre todas las regiones
