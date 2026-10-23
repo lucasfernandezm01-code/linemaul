@@ -1,6 +1,6 @@
-# Line & Maul · lista de pendientes (actualizada 21/10/2026)
+# Line & Maul · lista de pendientes (actualizada 23/10/2026)
 
-## Ahora (hoy, después de comer)
+## Ahora
 - [ ] Nombres incompletos T10: Urú Curé → Losada (10), Rins (6), Anino (15), De la Mota (18), López (20); Palermo Bajo → Mateo Frontera Croizet (23, falta 2.º nombre); La Tablada → ¿quién jugó de 14? (no figura) y "Calos" Molina Martínez (puse Carlos); JCVM → Simón Iglesias y Mateo Carando (vienen al revés)
 
 ## Nuevas funciones
@@ -9,10 +9,10 @@
 
 ## Antes de febrero
 - [ ] Prode Tucumán y Litoral: clubes, nombre del torneo y camisetas (hoy "Próximamente")
-- [ ] Planteles y resultados de Córdoba (T10): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
+- [ ] Resultados semanales de Córdoba (T10): datos desde Rugby Pro Score (rugbyproscore.com.ar). Lucas manda capturas de "Formaciones" (con número, titular/salió, quién entró) y "Minuto a minuto" (tries, conv., penales, tarjetas con minuto). Sin MOTM. Try de oro se detecta por minuto. Nombres vienen "Apellido, Nombre" → pasar a "Nombre Apellido"
 - [ ] Carga automática de resultados para los prodes
 - [ ] Mejorar la estética de los posteos
-- [ ] Prueba general automática de todo el sitio (Fantasy, Prode por región, tablas, torneos, admin, buzón, notificaciones)
+- [ ] Repetir la prueba general automática antes del arranque (ya hecha el 22/10, sin errores)
 - [ ] Fecha de prueba con 5 a 10 amigos jugando antes del arranque
 
 ## Temporada 2027
